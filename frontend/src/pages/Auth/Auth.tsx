@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState } from "react";
+import { useNavigate } from "react-router-dom"
 import { supabase } from "@/lib/supabaseClient"
 import { motion } from "framer-motion"
 import { Lock, Mail, Shield, User, ChevronRight, HeartPulse, CheckCircle2 } from "lucide-react"
@@ -6,22 +7,47 @@ import { Lock, Mail, Shield, User, ChevronRight, HeartPulse, CheckCircle2 } from
 export default function Auth() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [role, setRole] = useState("doctor") 
+  const [role, setRole] = useState("doctor")
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null);
+
+  const navigate = useNavigate()
+
 
   const signIn = async () => {
     setError(null)
     setLoading(true)
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
 
-    if (error) setError(error.message)
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+      return
+    }
+
+    const role = data.session?.user.user_metadata?.role
+
+    switch (role) {
+      case "doctor":
+        navigate("/doctor", { replace: true })
+        break
+      case "insurance":
+        navigate("/insurance", { replace: true })
+        break
+      case "admin":
+        navigate("/admin", { replace: true })
+        break
+      default:
+        navigate("/patient", { replace: true })
+    }
+
     setLoading(false)
   }
+
 
   const signUp = async () => {
     setError(null)
@@ -32,7 +58,7 @@ export default function Auth() {
       password,
       options: {
         data: {
-          role, 
+          role,
         },
       },
     })
@@ -44,23 +70,23 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 relative">
       {/* Structural Background Pattern - "Blockchain/Security" Grid */}
-      <div className="absolute inset-0 z-0 opacity-[0.03]" 
-           style={{ backgroundImage: 'radial-gradient(#3b82f6 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
+      <div className="absolute inset-0 z-0 opacity-[0.03]"
+        style={{ backgroundImage: 'radial-gradient(#3b82f6 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-16 items-center">
-          
+
           {/* Left Side: Brand Value Proposition */}
           <div className="hidden lg:block space-y-10 pr-8">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               className="space-y-6"
             >
 
-              
+
               <h1 className="text-5xl font-bold font-display text-slate-900 leading-tight">
                 Secure. Transparent. <br />
                 <span className="text-blue-700">Decentralized Care.</span>
@@ -76,7 +102,7 @@ export default function Auth() {
                 "Immutable audit trails for every action",
                 "Instant multi-party insurance verification"
               ].map((item, idx) => (
-                <motion.div 
+                <motion.div
                   key={idx}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -91,7 +117,7 @@ export default function Auth() {
           </div>
 
           {/* Right Side: Login Panel */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}

@@ -2,7 +2,6 @@ import { Routes, Route, Navigate } from "react-router-dom"
 import { useEffect, useState } from "react"
 import Layout from "./components/Layout"
 import ProtectedRoute from "./components/ProtectedRoute"
-import LandingPage from "./pages/LandingPage"
 import PatientDashboard from "./pages/patient/PatientDashboard"
 import PatientRecords from "./pages/patient/PatientRecords"
 import PatientAccess from "./pages/patient/PatientAccess"
@@ -53,18 +52,13 @@ function App() {
   return (
     <Routes>
       {/* Public / Auth */}
-      <Route
-        path="/"
-        element={!session ? <Auth /> : <Navigate to={getRedirectPath(session)} />}
-      />
+      <Route path="/" element={<Auth />} />
 
       {/* Patient Routes */}
       <Route
         path="/patient"
         element={
-          <ProtectedRoute requiredRole="patient">
-            <Layout role="patient" />
-          </ProtectedRoute>
+          <ProtectedRoute requiredRole="patient" />
         }
       >
         <Route index element={<PatientDashboard />} />
@@ -79,9 +73,7 @@ function App() {
       <Route
         path="/doctor"
         element={
-          <ProtectedRoute requiredRole="doctor">
-            <Layout role="doctor" />
-          </ProtectedRoute>
+          <ProtectedRoute requiredRole="doctor" />
         }
       >
         <Route index element={<DoctorDashboard />} />
@@ -93,9 +85,7 @@ function App() {
       <Route
         path="/insurance"
         element={
-          <ProtectedRoute requiredRole="insurance">
-            <Layout role="insurance" />
-          </ProtectedRoute>
+          <ProtectedRoute requiredRole="insurance" />
         }
       >
         <Route index element={<InsuranceDashboard />} />
@@ -106,9 +96,7 @@ function App() {
       <Route
         path="/admin"
         element={
-          <ProtectedRoute requiredRole="admin">
-            <Layout role="admin" />
-          </ProtectedRoute>
+          <ProtectedRoute requiredRole="admin" />
         }
       >
         <Route index element={<AdminDashboard />} />

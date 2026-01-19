@@ -1,23 +1,41 @@
-import { Navigate, useLocation } from 'react-router-dom'
-import { useWalletStore } from '../store/walletStore'
-import { UserRole } from '../types'
+import { Navigate, Outlet } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabaseClient"
 
-interface ProtectedRouteProps {
-  children: React.ReactNode
-  requiredRole?: UserRole
+interface Props {
+  requiredRole: string
 }
 
-export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { isConnected, role, address } = useWalletStore()
-  const location = useLocation()
+export default function ProtectedRoute({ requiredRole }: Props) {
+  const [loading, setLoading] = useState(true)
+  const [allowed, setAllowed] = useState(false)
 
-  if (!isConnected || !address) {
-    return <Navigate to="/" state={{ from: location }} replace />
+  useEffect(() => {
+    const check = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session) {
+        setAllowed(false)
+        setLoading(false)
+        return
+      }
+
+      const role = session.user.user_metadata?.role
+
+      setAllowed(role === requiredRole)
+      setLoading(false)
+    }
+
+    check()
+  }, [requiredRole])
+
+  if (loading) return <div className="p-6">Checking access…</div>
+
+  if (!allowed) {
+    return <Navigate to="/" replace />
   }
 
-  if (requiredRole && role !== requiredRole) {
-    return <Navigate to="/" state={{ from: location }} replace />
-  }
-
-  return <>{children}</>
+  return <Outlet />
 }
