@@ -8,7 +8,7 @@ import {
 import toast from 'react-hot-toast'
 import { useServices } from '../../services/useServices'
 import { useWalletStore } from '../../store/walletStore'
-import { MedicalRecord, MedicalRecordData } from '../../services/patientRecordsService'
+import { MedicalRecord } from '../../services/patientRecordsService'
 
 const recordTypeConfig = {
   0: { label: 'General', icon: FileText, color: 'bg-slate-500' },

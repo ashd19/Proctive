@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "./MedChainCore.sol";
+import "./VitalChainCore.sol";
 import "./PatientRecords.sol";
 
 /**
@@ -10,7 +10,7 @@ import "./PatientRecords.sol";
  * @dev Manages patient-controlled access to medical records with consent management
  */
 contract AccessControlManager is ReentrancyGuard {
-    MedChainCore public medChainCore;
+    VitalChainCore public VitalChainCore;
     PatientRecords public patientRecords;
 
     enum AccessLevel { 
@@ -106,23 +106,23 @@ contract AccessControlManager is ReentrancyGuard {
     );
 
     modifier onlyRegisteredPatient() {
-        require(medChainCore.isRegisteredPatient(msg.sender), "Not a registered patient");
+        require(VitalChainCore.isRegisteredPatient(msg.sender), "Not a registered patient");
         _;
     }
 
     modifier onlyAuthorizedRequester() {
         require(
-            medChainCore.hasRole(medChainCore.DOCTOR_ROLE(), msg.sender) ||
-            medChainCore.hasRole(medChainCore.LAB_ROLE(), msg.sender) ||
-            medChainCore.hasRole(medChainCore.HOSPITAL_ROLE(), msg.sender) ||
-            medChainCore.hasRole(medChainCore.INSURANCE_ROLE(), msg.sender),
+            VitalChainCore.hasRole(VitalChainCore.DOCTOR_ROLE(), msg.sender) ||
+            VitalChainCore.hasRole(VitalChainCore.LAB_ROLE(), msg.sender) ||
+            VitalChainCore.hasRole(VitalChainCore.HOSPITAL_ROLE(), msg.sender) ||
+            VitalChainCore.hasRole(VitalChainCore.INSURANCE_ROLE(), msg.sender),
             "Not authorized to request access"
         );
         _;
     }
 
-    constructor(address _medChainCoreAddress, address _patientRecordsAddress) {
-        medChainCore = MedChainCore(_medChainCoreAddress);
+    constructor(address _VitalChainCoreAddress, address _patientRecordsAddress) {
+        VitalChainCore = VitalChainCore(_VitalChainCoreAddress);
         patientRecords = PatientRecords(_patientRecordsAddress);
     }
 
@@ -194,7 +194,7 @@ contract AccessControlManager is ReentrancyGuard {
         string memory _institutionName,
         uint256 _validityPeriod
     ) external onlyAuthorizedRequester nonReentrant returns (uint256) {
-        require(medChainCore.isRegisteredPatient(_patient), "Patient not registered");
+        require(VitalChainCore.isRegisteredPatient(_patient), "Patient not registered");
         require(_requestedLevel != AccessLevel.NONE, "Invalid access level");
 
         requestCounter++;

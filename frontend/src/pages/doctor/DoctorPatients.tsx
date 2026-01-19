@@ -62,16 +62,18 @@ export default function DoctorPatients() {
 
     try {
       toast.loading('Loading record...')
-      const data = await services.patientRecords.getRecordData(record.ipfsHash)
+      const data = await services.patientRecords.getRecordData(record)
       
       // Log the access
-      await services.auditLog.logAccess(
-        record.patientAddress,
-        address,
-        record.id,
-        'Viewing medical record',
-        false
-      )
+      if (address) {
+        await services.auditLog.logAccess(
+          record.patient,
+          record.id,
+          0, // VIEW access type
+          '0.0.0.0',
+          'Viewing medical record'
+        )
+      }
 
       toast.dismiss()
       
@@ -233,7 +235,7 @@ export default function DoctorPatients() {
                         <div className="flex items-center gap-4 text-xs text-slate-500">
                           <span>Type: {record.metadata.recordType}</span>
                           <span>•</span>
-                          <span>{new Date(record.timestamp * 1000).toLocaleDateString()}</span>
+                          <span>{new Date(record.createdAt * 1000).toLocaleDateString()}</span>
                         </div>
                       </div>
                       <button

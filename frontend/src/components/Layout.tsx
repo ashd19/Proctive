@@ -16,10 +16,14 @@ import {
   Bell,
   Settings,
   User,
-  Activity
+  Activity,
+  Copy,
+  ExternalLink,
+  Check
 } from 'lucide-react'
 import { useWalletStore } from '../store/walletStore'
 import { UserRole } from '../types'
+import { toast } from 'react-hot-toast'
 
 interface LayoutProps {
   role: UserRole
@@ -73,6 +77,7 @@ export default function Layout({ role }: LayoutProps) {
   const { address, disconnect } = useWalletStore()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const items = menuItems[role] || []
 
@@ -83,6 +88,24 @@ export default function Layout({ role }: LayoutProps) {
 
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`
+  }
+
+  const copyAddress = async () => {
+    if (!address) return
+    
+    try {
+      await navigator.clipboard.writeText(address)
+      setCopied(true)
+      toast.success('Address copied to clipboard!')
+      setTimeout(() => setCopied(false), 2000)
+    } catch (error) {
+      toast.error('Failed to copy address')
+    }
+  }
+
+  const openInMetaMask = () => {
+    if (!address) return
+    window.open(`https://metamask.app.link/send/${address}`, '_blank')
   }
 
   return (
@@ -107,7 +130,7 @@ export default function Layout({ role }: LayoutProps) {
                   exit={{ opacity: 0, width: 0 }}
                   className="overflow-hidden"
                 >
-                  <span className="font-bold text-xl gradient-text">MedChain</span>
+                  <span className="font-bold text-xl gradient-text">VitalChain</span>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -241,14 +264,36 @@ export default function Layout({ role }: LayoutProps) {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50"
+                      className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50"
                     >
-                      <div className="px-4 py-2 border-b border-slate-100">
-                        <p className="text-sm font-medium text-slate-700">
-                          {address ? formatAddress(address) : 'Not Connected'}
-                        </p>
-                        <p className="text-xs text-slate-500">{roleLabels[role]}</p>
+                      <div className="px-4 py-3 border-b border-slate-100">
+                        <p className="text-xs text-slate-500 mb-1">{roleLabels[role]}</p>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-mono text-slate-700">
+                            {address ? formatAddress(address) : 'Not Connected'}
+                          </p>
+                          <button
+                            onClick={copyAddress}
+                            className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                            title="Copy address"
+                          >
+                            {copied ? (
+                              <Check className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <Copy className="w-4 h-4 text-slate-400" />
+                            )}
+                          </button>
+                        </div>
                       </div>
+                      
+                      <button
+                        onClick={openInMetaMask}
+                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Open in MetaMask
+                      </button>
+                      
                       <Link
                         to="/"
                         className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
@@ -257,13 +302,16 @@ export default function Layout({ role }: LayoutProps) {
                         <Settings className="w-4 h-4" />
                         Switch Role
                       </Link>
-                      <button
-                        onClick={handleDisconnect}
-                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Disconnect
-                      </button>
+                      
+                      <div className="border-t border-slate-100 mt-1 pt-1">
+                        <button
+                          onClick={handleDisconnect}
+                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Disconnect Wallet
+                        </button>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>

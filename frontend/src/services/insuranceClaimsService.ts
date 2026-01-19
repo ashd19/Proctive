@@ -12,6 +12,7 @@ export enum ClaimStatus {
 export interface InsuranceClaim {
   id: number
   patient: string
+  patientAddress: string
   provider: string
   recordIds: number[]
   claimAmount: bigint
@@ -22,6 +23,7 @@ export interface InsuranceClaim {
   dateOfService: number
   status: ClaimStatus
   submittedAt: number
+  processedAt: number
   reviewedAt: number
   reviewedBy: string
   notes: string
@@ -151,6 +153,7 @@ export class InsuranceClaimsService {
       return {
         id: Number(claim.id),
         patient: claim.patient,
+        patientAddress: claim.patient,
         provider: claim.provider,
         recordIds: claim.recordIds.map((id: bigint) => Number(id)),
         claimAmount: claim.claimAmount,
@@ -161,6 +164,7 @@ export class InsuranceClaimsService {
         dateOfService: Number(claim.dateOfService),
         status: Number(claim.status),
         submittedAt: Number(claim.submittedAt),
+        processedAt: Number(claim.reviewedAt),
         reviewedAt: Number(claim.reviewedAt),
         reviewedBy: claim.reviewedBy,
         notes: claim.notes

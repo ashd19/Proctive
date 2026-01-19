@@ -4,7 +4,7 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "_medChainCoreAddress",
+          "name": "_VitalChainCoreAddress",
           "type": "address"
         }
       ],
@@ -395,10 +395,10 @@
     },
     {
       "inputs": [],
-      "name": "medChainCore",
+      "name": "VitalChainCore",
       "outputs": [
         {
-          "internalType": "contract MedChainCore",
+          "internalType": "contract VitalChainCore",
           "name": "",
           "type": "address"
         }

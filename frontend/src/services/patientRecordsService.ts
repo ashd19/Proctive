@@ -35,6 +35,7 @@ export interface MedicalRecord {
   metadata: {
     title: string
     description: string
+    recordType: string
     hospitalName: string
     doctorName: string
     tags: string[]
@@ -156,6 +157,7 @@ export class PatientRecordsService {
         metadata: {
           title: metadata.title,
           description: metadata.description,
+          recordType: metadata.recordType || 'General',
           hospitalName: metadata.hospitalName,
           doctorName: metadata.doctorName,
           tags: metadata.tags,

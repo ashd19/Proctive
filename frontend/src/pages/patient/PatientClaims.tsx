@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Receipt, Plus, Loader, Clock, CheckCircle, XCircle, AlertCircle, DollarSign, FileText } from 'lucide-react'
+import { Receipt, Plus, Loader, Clock, CheckCircle, DollarSign } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useServices } from '../../services/useServices'
 import { useWalletStore } from '../../store/walletStore'

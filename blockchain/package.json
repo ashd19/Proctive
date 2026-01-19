@@ -1,5 +1,5 @@
 {
-  "name": "medchain-blockchain",
+  "name": "VitalChain-blockchain",
   "version": "1.0.0",
   "description": "Smart contracts for Secure Patient Health Data Exchange",
   "scripts": {

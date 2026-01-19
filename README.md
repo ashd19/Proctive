@@ -1,8 +1,8 @@
-# MedChain - Secure Patient Health Data Exchange
+# VitalChain - Secure Patient Health Data Exchange
 
 A decentralized blockchain-based platform for secure medical record sharing with patient-controlled access, insurance claim automation, and emergency access protocols.
 
-![MedChain Architecture](https://via.placeholder.com/800x400?text=MedChain+Architecture)
+![VitalChain Architecture](https://via.placeholder.com/800x400?text=VitalChain+Architecture)
 
 ## 🌟 Features
 
@@ -56,7 +56,7 @@ A decentralized blockchain-based platform for secure medical record sharing with
 ┌──────────────────────────────────────────────────────────────────┐
 │                    Ethereum Blockchain                           │
 │  ┌──────────────┐ ┌──────────────┐ ┌──────────────────────────┐ │
-│  │ MedChainCore │ │PatientRecords│ │ AccessControlManager     │ │
+│  │ VitalChainCore │ │PatientRecords│ │ AccessControlManager     │ │
 │  │  (Roles &    │ │  (IPFS +     │ │  (Consent & Permissions) │ │
 │  │Registration) │ │  Metadata)   │ │                          │ │
 │  └──────────────┘ └──────────────┘ └──────────────────────────┘ │
@@ -87,8 +87,8 @@ A decentralized blockchain-based platform for secure medical record sharing with
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/medchain.git
-   cd medchain
+   git clone https://github.com/yourusername/VitalChain.git
+   cd VitalChain
    ```
 
 2. **Install all dependencies**
@@ -126,10 +126,10 @@ A decentralized blockchain-based platform for secure medical record sharing with
 ## 📁 Project Structure
 
 ```
-medchain/
+VitalChain/
 ├── blockchain/                 # Smart contracts & deployment
 │   ├── contracts/
-│   │   ├── MedChainCore.sol         # Role management & registration
+│   │   ├── VitalChainCore.sol         # Role management & registration
 │   │   ├── PatientRecords.sol       # Medical records storage
 │   │   ├── AccessControlManager.sol # Consent & permissions
 │   │   ├── AuditLog.sol             # Access logging
@@ -158,7 +158,7 @@ medchain/
 
 ## 🔐 Smart Contracts
 
-### MedChainCore
+### VitalChainCore
 Central registry for all healthcare entities (hospitals, doctors, labs, insurance providers) and patients.
 
 ### PatientRecords
@@ -251,9 +251,9 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## 📞 Support
 
-- Documentation: [docs.medchain.io](https://docs.medchain.io)
-- Email: support@medchain.io
-- Discord: [MedChain Community](https://discord.gg/medchain)
+- Documentation: [docs.VitalChain.io](https://docs.VitalChain.io)
+- Email: support@VitalChain.io
+- Discord: [VitalChain Community](https://discord.gg/VitalChain)
 
 ---
 

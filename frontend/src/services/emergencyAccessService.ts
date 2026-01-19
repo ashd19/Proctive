@@ -2,12 +2,16 @@ import { Contract } from 'ethers'
 
 export interface EmergencyAccessLog {
   id: number
+  logId: number
   doctor: string
   patient: string
+  patientAddress: string
   recordId: number
   reason: string
   timestamp: number
   resolved: boolean
+  wasResolved: boolean
+  resolvedAt: number
   resolution: string
 }
 

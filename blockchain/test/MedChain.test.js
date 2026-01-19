@@ -1,53 +1,53 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("MedChainCore", function () {
-  let medChainCore;
+describe("VitalChainCore", function () {
+  let VitalChainCore;
   let owner, hospital, doctor, patient, lab, insurance;
 
   beforeEach(async function () {
     [owner, hospital, doctor, patient, lab, insurance] = await ethers.getSigners();
     
-    const MedChainCore = await ethers.getContractFactory("MedChainCore");
-    medChainCore = await MedChainCore.deploy();
-    await medChainCore.waitForDeployment();
+    const VitalChainCore = await ethers.getContractFactory("VitalChainCore");
+    VitalChainCore = await VitalChainCore.deploy();
+    await VitalChainCore.waitForDeployment();
   });
 
   describe("Hospital Registration", function () {
     it("Should register a hospital", async function () {
-      await medChainCore.registerHospital(
+      await VitalChainCore.registerHospital(
         hospital.address,
         "City General Hospital",
         "HOSP-2024-001"
       );
 
-      expect(await medChainCore.isHospital(hospital.address)).to.be.true;
+      expect(await VitalChainCore.isHospital(hospital.address)).to.be.true;
       
-      const info = await medChainCore.getHospitalInfo(hospital.address);
+      const info = await VitalChainCore.getHospitalInfo(hospital.address);
       expect(info.name).to.equal("City General Hospital");
       expect(info.licenseNumber).to.equal("HOSP-2024-001");
       expect(info.isActive).to.be.true;
     });
 
     it("Should emit HospitalRegistered event", async function () {
-      await expect(medChainCore.registerHospital(
+      await expect(VitalChainCore.registerHospital(
         hospital.address,
         "City General Hospital",
         "HOSP-2024-001"
       ))
-        .to.emit(medChainCore, "HospitalRegistered")
+        .to.emit(VitalChainCore, "HospitalRegistered")
         .withArgs(hospital.address, "City General Hospital");
     });
 
     it("Should not allow duplicate hospital registration", async function () {
-      await medChainCore.registerHospital(
+      await VitalChainCore.registerHospital(
         hospital.address,
         "City General Hospital",
         "HOSP-2024-001"
       );
 
       await expect(
-        medChainCore.registerHospital(
+        VitalChainCore.registerHospital(
           hospital.address,
           "Another Hospital",
           "HOSP-2024-002"
@@ -58,7 +58,7 @@ describe("MedChainCore", function () {
 
   describe("Doctor Registration", function () {
     beforeEach(async function () {
-      await medChainCore.registerHospital(
+      await VitalChainCore.registerHospital(
         hospital.address,
         "City General Hospital",
         "HOSP-2024-001"
@@ -66,34 +66,34 @@ describe("MedChainCore", function () {
     });
 
     it("Should register a doctor affiliated with a hospital", async function () {
-      await medChainCore.registerDoctor(
+      await VitalChainCore.registerDoctor(
         doctor.address,
         "Dr. John Smith",
         "MD-2024-001",
         hospital.address
       );
 
-      expect(await medChainCore.isDoctor(doctor.address)).to.be.true;
+      expect(await VitalChainCore.isDoctor(doctor.address)).to.be.true;
       
-      const info = await medChainCore.getDoctorInfo(doctor.address);
+      const info = await VitalChainCore.getDoctorInfo(doctor.address);
       expect(info.name).to.equal("Dr. John Smith");
       expect(info.hospitalAddress).to.equal(hospital.address);
     });
 
     it("Should emit DoctorRegistered event", async function () {
-      await expect(medChainCore.registerDoctor(
+      await expect(VitalChainCore.registerDoctor(
         doctor.address,
         "Dr. John Smith",
         "MD-2024-001",
         hospital.address
       ))
-        .to.emit(medChainCore, "DoctorRegistered")
+        .to.emit(VitalChainCore, "DoctorRegistered")
         .withArgs(doctor.address, "Dr. John Smith", hospital.address);
     });
 
     it("Should fail if hospital is not registered", async function () {
       await expect(
-        medChainCore.registerDoctor(
+        VitalChainCore.registerDoctor(
           doctor.address,
           "Dr. John Smith",
           "MD-2024-001",
@@ -105,88 +105,88 @@ describe("MedChainCore", function () {
 
   describe("Laboratory Registration", function () {
     it("Should register a laboratory", async function () {
-      await medChainCore.registerLaboratory(
+      await VitalChainCore.registerLaboratory(
         lab.address,
         "MedLab Diagnostics",
         "LAB-2024-001"
       );
 
-      expect(await medChainCore.isLaboratory(lab.address)).to.be.true;
+      expect(await VitalChainCore.isLaboratory(lab.address)).to.be.true;
     });
 
     it("Should emit LaboratoryRegistered event", async function () {
-      await expect(medChainCore.registerLaboratory(
+      await expect(VitalChainCore.registerLaboratory(
         lab.address,
         "MedLab Diagnostics",
         "LAB-2024-001"
       ))
-        .to.emit(medChainCore, "LaboratoryRegistered")
+        .to.emit(VitalChainCore, "LaboratoryRegistered")
         .withArgs(lab.address, "MedLab Diagnostics");
     });
   });
 
   describe("Insurance Provider Registration", function () {
     it("Should register an insurance provider", async function () {
-      await medChainCore.registerInsuranceProvider(
+      await VitalChainCore.registerInsuranceProvider(
         insurance.address,
         "HealthFirst Insurance",
         "INS-2024-001"
       );
 
-      expect(await medChainCore.isInsuranceProvider(insurance.address)).to.be.true;
+      expect(await VitalChainCore.isInsuranceProvider(insurance.address)).to.be.true;
     });
 
     it("Should emit InsuranceProviderRegistered event", async function () {
-      await expect(medChainCore.registerInsuranceProvider(
+      await expect(VitalChainCore.registerInsuranceProvider(
         insurance.address,
         "HealthFirst Insurance",
         "INS-2024-001"
       ))
-        .to.emit(medChainCore, "InsuranceProviderRegistered")
+        .to.emit(VitalChainCore, "InsuranceProviderRegistered")
         .withArgs(insurance.address, "HealthFirst Insurance");
     });
   });
 
   describe("Patient Registration", function () {
     it("Should allow self-registration as patient", async function () {
-      await medChainCore.connect(patient).registerPatient();
-      expect(await medChainCore.isPatient(patient.address)).to.be.true;
+      await VitalChainCore.connect(patient).registerPatient();
+      expect(await VitalChainCore.isPatient(patient.address)).to.be.true;
     });
 
     it("Should emit PatientRegistered event", async function () {
-      await expect(medChainCore.connect(patient).registerPatient())
-        .to.emit(medChainCore, "PatientRegistered")
+      await expect(VitalChainCore.connect(patient).registerPatient())
+        .to.emit(VitalChainCore, "PatientRegistered")
         .withArgs(patient.address);
     });
 
     it("Should not allow duplicate patient registration", async function () {
-      await medChainCore.connect(patient).registerPatient();
+      await VitalChainCore.connect(patient).registerPatient();
       await expect(
-        medChainCore.connect(patient).registerPatient()
+        VitalChainCore.connect(patient).registerPatient()
       ).to.be.revertedWith("Patient already registered");
     });
   });
 });
 
 describe("PatientRecords", function () {
-  let medChainCore, patientRecords;
+  let VitalChainCore, patientRecords;
   let owner, hospital, doctor, patient;
 
   beforeEach(async function () {
     [owner, hospital, doctor, patient] = await ethers.getSigners();
     
-    const MedChainCore = await ethers.getContractFactory("MedChainCore");
-    medChainCore = await MedChainCore.deploy();
-    await medChainCore.waitForDeployment();
+    const VitalChainCore = await ethers.getContractFactory("VitalChainCore");
+    VitalChainCore = await VitalChainCore.deploy();
+    await VitalChainCore.waitForDeployment();
 
     const PatientRecords = await ethers.getContractFactory("PatientRecords");
-    patientRecords = await PatientRecords.deploy(await medChainCore.getAddress());
+    patientRecords = await PatientRecords.deploy(await VitalChainCore.getAddress());
     await patientRecords.waitForDeployment();
 
     // Setup: Register entities
-    await medChainCore.registerHospital(hospital.address, "City Hospital", "HOSP-001");
-    await medChainCore.registerDoctor(doctor.address, "Dr. Smith", "MD-001", hospital.address);
-    await medChainCore.connect(patient).registerPatient();
+    await VitalChainCore.registerHospital(hospital.address, "City Hospital", "HOSP-001");
+    await VitalChainCore.registerDoctor(doctor.address, "Dr. Smith", "MD-001", hospital.address);
+    await VitalChainCore.connect(patient).registerPatient();
   });
 
   describe("Adding Records", function () {
@@ -255,24 +255,24 @@ describe("PatientRecords", function () {
 });
 
 describe("AccessControlManager", function () {
-  let medChainCore, accessControl;
+  let VitalChainCore, accessControl;
   let owner, hospital, doctor, patient;
 
   beforeEach(async function () {
     [owner, hospital, doctor, patient] = await ethers.getSigners();
     
-    const MedChainCore = await ethers.getContractFactory("MedChainCore");
-    medChainCore = await MedChainCore.deploy();
-    await medChainCore.waitForDeployment();
+    const VitalChainCore = await ethers.getContractFactory("VitalChainCore");
+    VitalChainCore = await VitalChainCore.deploy();
+    await VitalChainCore.waitForDeployment();
 
     const AccessControlManager = await ethers.getContractFactory("AccessControlManager");
-    accessControl = await AccessControlManager.deploy(await medChainCore.getAddress());
+    accessControl = await AccessControlManager.deploy(await VitalChainCore.getAddress());
     await accessControl.waitForDeployment();
 
     // Setup
-    await medChainCore.registerHospital(hospital.address, "City Hospital", "HOSP-001");
-    await medChainCore.registerDoctor(doctor.address, "Dr. Smith", "MD-001", hospital.address);
-    await medChainCore.connect(patient).registerPatient();
+    await VitalChainCore.registerHospital(hospital.address, "City Hospital", "HOSP-001");
+    await VitalChainCore.registerDoctor(doctor.address, "Dr. Smith", "MD-001", hospital.address);
+    await VitalChainCore.connect(patient).registerPatient();
   });
 
   describe("Access Requests", function () {
@@ -350,24 +350,24 @@ describe("AccessControlManager", function () {
 });
 
 describe("AuditLog", function () {
-  let medChainCore, auditLog;
+  let VitalChainCore, auditLog;
   let owner, hospital, doctor, patient;
 
   beforeEach(async function () {
     [owner, hospital, doctor, patient] = await ethers.getSigners();
     
-    const MedChainCore = await ethers.getContractFactory("MedChainCore");
-    medChainCore = await MedChainCore.deploy();
-    await medChainCore.waitForDeployment();
+    const VitalChainCore = await ethers.getContractFactory("VitalChainCore");
+    VitalChainCore = await VitalChainCore.deploy();
+    await VitalChainCore.waitForDeployment();
 
     const AuditLog = await ethers.getContractFactory("AuditLog");
-    auditLog = await AuditLog.deploy(await medChainCore.getAddress());
+    auditLog = await AuditLog.deploy(await VitalChainCore.getAddress());
     await auditLog.waitForDeployment();
 
     // Setup
-    await medChainCore.registerHospital(hospital.address, "City Hospital", "HOSP-001");
-    await medChainCore.registerDoctor(doctor.address, "Dr. Smith", "MD-001", hospital.address);
-    await medChainCore.connect(patient).registerPatient();
+    await VitalChainCore.registerHospital(hospital.address, "City Hospital", "HOSP-001");
+    await VitalChainCore.registerDoctor(doctor.address, "Dr. Smith", "MD-001", hospital.address);
+    await VitalChainCore.connect(patient).registerPatient();
   });
 
   describe("Logging Access", function () {
@@ -432,24 +432,24 @@ describe("AuditLog", function () {
 });
 
 describe("EmergencyAccess", function () {
-  let medChainCore, emergencyAccess;
+  let VitalChainCore, emergencyAccess;
   let owner, hospital, doctor, patient;
 
   beforeEach(async function () {
     [owner, hospital, doctor, patient] = await ethers.getSigners();
     
-    const MedChainCore = await ethers.getContractFactory("MedChainCore");
-    medChainCore = await MedChainCore.deploy();
-    await medChainCore.waitForDeployment();
+    const VitalChainCore = await ethers.getContractFactory("VitalChainCore");
+    VitalChainCore = await VitalChainCore.deploy();
+    await VitalChainCore.waitForDeployment();
 
     const EmergencyAccess = await ethers.getContractFactory("EmergencyAccess");
-    emergencyAccess = await EmergencyAccess.deploy(await medChainCore.getAddress());
+    emergencyAccess = await EmergencyAccess.deploy(await VitalChainCore.getAddress());
     await emergencyAccess.waitForDeployment();
 
     // Setup
-    await medChainCore.registerHospital(hospital.address, "City Hospital", "HOSP-001");
-    await medChainCore.registerDoctor(doctor.address, "Dr. Smith", "MD-001", hospital.address);
-    await medChainCore.connect(patient).registerPatient();
+    await VitalChainCore.registerHospital(hospital.address, "City Hospital", "HOSP-001");
+    await VitalChainCore.registerDoctor(doctor.address, "Dr. Smith", "MD-001", hospital.address);
+    await VitalChainCore.connect(patient).registerPatient();
   });
 
   describe("Starting Emergency Sessions", function () {
@@ -511,23 +511,23 @@ describe("EmergencyAccess", function () {
 });
 
 describe("InsuranceClaims", function () {
-  let medChainCore, insuranceClaims;
+  let VitalChainCore, insuranceClaims;
   let owner, insurance, patient;
 
   beforeEach(async function () {
     [owner, insurance, patient] = await ethers.getSigners();
     
-    const MedChainCore = await ethers.getContractFactory("MedChainCore");
-    medChainCore = await MedChainCore.deploy();
-    await medChainCore.waitForDeployment();
+    const VitalChainCore = await ethers.getContractFactory("VitalChainCore");
+    VitalChainCore = await VitalChainCore.deploy();
+    await VitalChainCore.waitForDeployment();
 
     const InsuranceClaims = await ethers.getContractFactory("InsuranceClaims");
-    insuranceClaims = await InsuranceClaims.deploy(await medChainCore.getAddress());
+    insuranceClaims = await InsuranceClaims.deploy(await VitalChainCore.getAddress());
     await insuranceClaims.waitForDeployment();
 
     // Setup
-    await medChainCore.registerInsuranceProvider(insurance.address, "HealthFirst", "INS-001");
-    await medChainCore.connect(patient).registerPatient();
+    await VitalChainCore.registerInsuranceProvider(insurance.address, "HealthFirst", "INS-001");
+    await VitalChainCore.connect(patient).registerPatient();
   });
 
   describe("Policy Registration", function () {

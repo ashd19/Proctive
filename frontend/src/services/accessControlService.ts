@@ -244,6 +244,18 @@ export class AccessControlService {
     }
   }
 
+  // Get all patients that requester has access to
+  async getRequesterAccessiblePatients(requesterAddress: string): Promise<string[]> {
+    try {
+      const requests = await this.getRequesterConsentRequests(requesterAddress)
+      const approvedRequests = requests.filter(r => r.status === ConsentStatus.APPROVED)
+      return [...new Set(approvedRequests.map(r => r.patient))]
+    } catch (error: any) {
+      console.error('Error fetching accessible patients:', error)
+      return []
+    }
+  }
+
   // Check if has access to records
   async hasAccessToRecords(
     patientAddress: string,

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { FileText, DollarSign, Clock, CheckCircle, XCircle, Loader, BarChart3 } from 'lucide-react'
+import { DollarSign, Clock, CheckCircle, XCircle, Loader, BarChart3 } from 'lucide-react'
 import { useServices } from '../../services/useServices'
 import { useWalletStore } from '../../store/walletStore'
 import { ClaimStatus } from '../../services/insuranceClaimsService'

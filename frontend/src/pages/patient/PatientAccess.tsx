@@ -4,7 +4,7 @@ import { Shield, Clock, CheckCircle, XCircle, Loader, AlertTriangle, User, Build
 import toast from 'react-hot-toast'
 import { useServices } from '../../services/useServices'
 import { useWalletStore } from '../../store/walletStore'
-import { ConsentRequest, AccessGrant, AccessControlService, ConsentStatus, AccessLevel } from '../../services/accessControlService'
+import { ConsentRequest, AccessGrant, AccessControlService, ConsentStatus } from '../../services/accessControlService'
 
 export default function PatientAccess() {
   const { services, loading: servicesLoading } = useServices()
@@ -13,7 +13,6 @@ export default function PatientAccess() {
   const [activeTab, setActiveTab] = useState<'requests' | 'grants'>('requests')
   const [consentRequests, setConsentRequests] = useState<ConsentRequest[]>([])
   const [accessGrants, setAccessGrants] = useState<AccessGrant[]>([])
-  const [grantees, setGrantees] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState<number | null>(null)
 
@@ -34,7 +33,6 @@ export default function PatientAccess() {
 
         // Load grantees
         const granteeAddresses = await services.accessControl.getPatientGrantees(address)
-        setGrantees(granteeAddresses)
 
         // Load access grants for each grantee
         const grants = await Promise.all(

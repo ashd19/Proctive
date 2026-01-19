@@ -2,14 +2,14 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "./MedChainCore.sol";
+import "./VitalChainCore.sol";
 
 /**
  * @title PatientRecords
  * @dev Manages patient medical records with patient-controlled access
  */
 contract PatientRecords is ReentrancyGuard {
-    MedChainCore public medChainCore;
+    VitalChainCore public VitalChainCore;
 
     enum RecordType { 
         GENERAL, 
@@ -73,22 +73,22 @@ contract PatientRecords is ReentrancyGuard {
     );
 
     modifier onlyRegisteredPatient() {
-        require(medChainCore.isRegisteredPatient(msg.sender), "Not a registered patient");
+        require(VitalChainCore.isRegisteredPatient(msg.sender), "Not a registered patient");
         _;
     }
 
     modifier onlyAuthorizedCreator() {
         require(
-            medChainCore.hasRole(medChainCore.DOCTOR_ROLE(), msg.sender) ||
-            medChainCore.hasRole(medChainCore.LAB_ROLE(), msg.sender) ||
-            medChainCore.hasRole(medChainCore.HOSPITAL_ROLE(), msg.sender),
+            VitalChainCore.hasRole(VitalChainCore.DOCTOR_ROLE(), msg.sender) ||
+            VitalChainCore.hasRole(VitalChainCore.LAB_ROLE(), msg.sender) ||
+            VitalChainCore.hasRole(VitalChainCore.HOSPITAL_ROLE(), msg.sender),
             "Not authorized to create records"
         );
         _;
     }
 
-    constructor(address _medChainCoreAddress) {
-        medChainCore = MedChainCore(_medChainCoreAddress);
+    constructor(address _VitalChainCoreAddress) {
+        VitalChainCore = VitalChainCore(_VitalChainCoreAddress);
     }
 
     /**
@@ -116,7 +116,7 @@ contract PatientRecords is ReentrancyGuard {
         string memory _doctorName,
         string[] memory _tags
     ) external onlyAuthorizedCreator nonReentrant returns (uint256) {
-        require(medChainCore.isRegisteredPatient(_patient), "Patient not registered");
+        require(VitalChainCore.isRegisteredPatient(_patient), "Patient not registered");
         require(bytes(_ipfsHash).length > 0, "IPFS hash required");
         
         recordCounter++;

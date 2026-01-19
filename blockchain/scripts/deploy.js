@@ -1,25 +1,25 @@
 const hre = require("hardhat");
 
 async function main() {
-  console.log("🏥 Deploying MedChain Health Exchange Contracts...\n");
+  console.log("🏥 Deploying VitalChain Health Exchange Contracts...\n");
 
   const [deployer] = await hre.ethers.getSigners();
   console.log("Deploying contracts with account:", deployer.address);
   console.log("Account balance:", (await hre.ethers.provider.getBalance(deployer.address)).toString());
   console.log("");
 
-  // 1. Deploy MedChainCore
-  console.log("1️⃣  Deploying MedChainCore...");
-  const MedChainCore = await hre.ethers.getContractFactory("MedChainCore");
-  const medChainCore = await MedChainCore.deploy();
-  await medChainCore.waitForDeployment();
-  const medChainCoreAddress = await medChainCore.getAddress();
-  console.log("   MedChainCore deployed to:", medChainCoreAddress);
+  // 1. Deploy VitalChainCore
+  console.log("1️⃣  Deploying VitalChainCore...");
+  const VitalChainCore = await hre.ethers.getContractFactory("VitalChainCore");
+  const VitalChainCore = await VitalChainCore.deploy();
+  await VitalChainCore.waitForDeployment();
+  const VitalChainCoreAddress = await VitalChainCore.getAddress();
+  console.log("   VitalChainCore deployed to:", VitalChainCoreAddress);
 
   // 2. Deploy PatientRecords
   console.log("2️⃣  Deploying PatientRecords...");
   const PatientRecords = await hre.ethers.getContractFactory("PatientRecords");
-  const patientRecords = await PatientRecords.deploy(medChainCoreAddress);
+  const patientRecords = await PatientRecords.deploy(VitalChainCoreAddress);
   await patientRecords.waitForDeployment();
   const patientRecordsAddress = await patientRecords.getAddress();
   console.log("   PatientRecords deployed to:", patientRecordsAddress);
@@ -27,7 +27,7 @@ async function main() {
   // 3. Deploy AccessControlManager
   console.log("3️⃣  Deploying AccessControlManager...");
   const AccessControlManager = await hre.ethers.getContractFactory("AccessControlManager");
-  const accessControl = await AccessControlManager.deploy(medChainCoreAddress, patientRecordsAddress);
+  const accessControl = await AccessControlManager.deploy(VitalChainCoreAddress, patientRecordsAddress);
   await accessControl.waitForDeployment();
   const accessControlAddress = await accessControl.getAddress();
   console.log("   AccessControlManager deployed to:", accessControlAddress);
@@ -35,7 +35,7 @@ async function main() {
   // 4. Deploy AuditLog
   console.log("4️⃣  Deploying AuditLog...");
   const AuditLog = await hre.ethers.getContractFactory("AuditLog");
-  const auditLog = await AuditLog.deploy(medChainCoreAddress, patientRecordsAddress, accessControlAddress);
+  const auditLog = await AuditLog.deploy(VitalChainCoreAddress, patientRecordsAddress, accessControlAddress);
   await auditLog.waitForDeployment();
   const auditLogAddress = await auditLog.getAddress();
   console.log("   AuditLog deployed to:", auditLogAddress);
@@ -44,7 +44,7 @@ async function main() {
   console.log("5️⃣  Deploying EmergencyAccess...");
   const EmergencyAccess = await hre.ethers.getContractFactory("EmergencyAccess");
   const emergencyAccess = await EmergencyAccess.deploy(
-    medChainCoreAddress,
+    VitalChainCoreAddress,
     patientRecordsAddress,
     accessControlAddress,
     auditLogAddress
@@ -57,7 +57,7 @@ async function main() {
   console.log("6️⃣  Deploying InsuranceClaims...");
   const InsuranceClaims = await hre.ethers.getContractFactory("InsuranceClaims");
   const insuranceClaims = await InsuranceClaims.deploy(
-    medChainCoreAddress,
+    VitalChainCoreAddress,
     patientRecordsAddress,
     accessControlAddress,
     auditLogAddress
@@ -72,7 +72,7 @@ async function main() {
   console.log("=".repeat(60));
   console.log("📋 DEPLOYMENT SUMMARY");
   console.log("=".repeat(60));
-  console.log(`MedChainCore:         ${medChainCoreAddress}`);
+  console.log(`VitalChainCore:         ${VitalChainCoreAddress}`);
   console.log(`PatientRecords:       ${patientRecordsAddress}`);
   console.log(`AccessControlManager: ${accessControlAddress}`);
   console.log(`AuditLog:             ${auditLogAddress}`);
@@ -86,7 +86,7 @@ async function main() {
     deployer: deployer.address,
     timestamp: new Date().toISOString(),
     contracts: {
-      MedChainCore: medChainCoreAddress,
+      VitalChainCore: VitalChainCoreAddress,
       PatientRecords: patientRecordsAddress,
       AccessControlManager: accessControlAddress,
       AuditLog: auditLogAddress,
@@ -117,7 +117,7 @@ async function main() {
   }
 
   const contractNames = [
-    "MedChainCore",
+    "VitalChainCore",
     "PatientRecords", 
     "AccessControlManager",
     "AuditLog",

@@ -5,10 +5,10 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
- * @title MedChainCore
+ * @title VitalChainCore
  * @dev Core contract for managing healthcare entities registration and roles
  */
-contract MedChainCore is AccessControl, ReentrancyGuard {
+contract VitalChainCore is AccessControl, ReentrancyGuard {
     bytes32 public constant HOSPITAL_ROLE = keccak256("HOSPITAL_ROLE");
     bytes32 public constant DOCTOR_ROLE = keccak256("DOCTOR_ROLE");
     bytes32 public constant LAB_ROLE = keccak256("LAB_ROLE");

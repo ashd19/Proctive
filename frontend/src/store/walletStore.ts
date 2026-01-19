@@ -170,7 +170,7 @@ export const useWalletStore = create<WalletState & WalletActions>()(
       },
     }),
     {
-      name: 'medchain-wallet',
+      name: 'VitalChain-wallet',
       partialize: (state) => ({ 
         role: state.role,
       }),

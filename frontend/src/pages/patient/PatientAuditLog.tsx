@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Eye, Download, Clock, User, FileText, AlertTriangle, Loader, Filter } from 'lucide-react'
+import { Eye, Download, Clock, User, FileText, AlertTriangle, Loader } from 'lucide-react'
 import { useServices } from '../../services/useServices'
 import { useWalletStore } from '../../store/walletStore'
 import { AuditLogEntry, AuditLogService, AccessType } from '../../services/auditLogService'

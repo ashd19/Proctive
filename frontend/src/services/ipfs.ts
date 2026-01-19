@@ -91,7 +91,7 @@ class IPFSService {
       body: JSON.stringify({
         pinataContent: jsonData,
         pinataMetadata: {
-          name: `MedChain-${Date.now()}`,
+          name: `VitalChain-${Date.now()}`,
         },
       }),
     })

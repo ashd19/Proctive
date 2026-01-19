@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { FileText, Clock, CheckCircle, XCircle, Eye, Loader, DollarSign, User, Calendar } from 'lucide-react'
+import { FileText, CheckCircle, XCircle, Eye, Loader, User, Calendar } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useServices } from '../../services/useServices'
-import { useWalletStore } from '../../store/walletStore'
 import { InsuranceClaim, ClaimStatus, InsuranceClaimsService } from '../../services/insuranceClaimsService'
 
 export default function InsuranceClaimsPage() {
   const { services, loading: servicesLoading } = useServices()
-  const { address } = useWalletStore()
   
   const [claims, setClaims] = useState<InsuranceClaim[]>([])
   const [loading, setLoading] = useState(true)

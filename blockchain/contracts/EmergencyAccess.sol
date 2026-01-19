@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "./MedChainCore.sol";
+import "./VitalChainCore.sol";
 import "./PatientRecords.sol";
 import "./AccessControlManager.sol";
 import "./AuditLog.sol";
@@ -12,7 +12,7 @@ import "./AuditLog.sol";
  * @dev Handles emergency access bypass for life-threatening situations
  */
 contract EmergencyAccess is ReentrancyGuard {
-    MedChainCore public medChainCore;
+    VitalChainCore public VitalChainCore;
     PatientRecords public patientRecords;
     AccessControlManager public accessControl;
     AuditLog public auditLog;
@@ -108,7 +108,7 @@ contract EmergencyAccess is ReentrancyGuard {
 
     modifier onlyEmergencyDoctor() {
         require(
-            medChainCore.hasRole(medChainCore.EMERGENCY_ROLE(), msg.sender),
+            VitalChainCore.hasRole(VitalChainCore.EMERGENCY_ROLE(), msg.sender),
             "No emergency access rights"
         );
         _;
@@ -116,20 +116,20 @@ contract EmergencyAccess is ReentrancyGuard {
 
     modifier onlyHospitalOrAdmin() {
         require(
-            medChainCore.hasRole(medChainCore.HOSPITAL_ROLE(), msg.sender) ||
-            medChainCore.hasRole(medChainCore.DEFAULT_ADMIN_ROLE(), msg.sender),
+            VitalChainCore.hasRole(VitalChainCore.HOSPITAL_ROLE(), msg.sender) ||
+            VitalChainCore.hasRole(VitalChainCore.DEFAULT_ADMIN_ROLE(), msg.sender),
             "Not authorized"
         );
         _;
     }
 
     constructor(
-        address _medChainCoreAddress,
+        address _VitalChainCoreAddress,
         address _patientRecordsAddress,
         address _accessControlAddress,
         address _auditLogAddress
     ) {
-        medChainCore = MedChainCore(_medChainCoreAddress);
+        VitalChainCore = VitalChainCore(_VitalChainCoreAddress);
         patientRecords = PatientRecords(_patientRecordsAddress);
         accessControl = AccessControlManager(_accessControlAddress);
         auditLog = AuditLog(_auditLogAddress);
@@ -152,7 +152,7 @@ contract EmergencyAccess is ReentrancyGuard {
         string memory _doctorName,
         string memory _hospitalName
     ) external onlyEmergencyDoctor nonReentrant returns (uint256) {
-        require(medChainCore.isRegisteredPatient(_patient), "Patient not registered");
+        require(VitalChainCore.isRegisteredPatient(_patient), "Patient not registered");
         require(activeSession[msg.sender] == 0, "Already has active session");
         require(bytes(_reason).length > 0, "Reason required");
 
@@ -268,8 +268,8 @@ contract EmergencyAccess is ReentrancyGuard {
         EmergencySession storage session = sessions[_sessionId];
         require(
             session.patient == msg.sender ||
-            medChainCore.hasRole(medChainCore.HOSPITAL_ROLE(), msg.sender) ||
-            medChainCore.hasRole(medChainCore.DEFAULT_ADMIN_ROLE(), msg.sender),
+            VitalChainCore.hasRole(VitalChainCore.HOSPITAL_ROLE(), msg.sender) ||
+            VitalChainCore.hasRole(VitalChainCore.DEFAULT_ADMIN_ROLE(), msg.sender),
             "Not authorized to flag"
         );
         require(

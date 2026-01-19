@@ -125,7 +125,7 @@ export default function LandingPage() {
     }
     
     try {
-      const message = `MedChain Test Signature\nTimestamp: ${new Date().toISOString()}\nAddress: ${address}`
+      const message = `VitalChain Test Signature\nTimestamp: ${new Date().toISOString()}\nAddress: ${address}`
       toast.loading('Please sign the message in MetaMask...')
       
       const signature = await signer.signMessage(message)
@@ -283,7 +283,7 @@ export default function LandingPage() {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-medical-500 flex items-center justify-center shadow-lg shadow-primary-500/20">
                 <Activity className="w-5 h-5 text-white" />
               </div>
-              <span className="font-bold text-xl gradient-text">MedChain</span>
+              <span className="font-bold text-xl gradient-text">VitalChain</span>
             </Link>
 
             <div className="hidden md:flex items-center gap-8">
@@ -582,7 +582,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-slate-900 mb-4">
-              How MedChain Works
+              How VitalChain Works
             </h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
               A simple, secure workflow for managing health data across the ecosystem.
@@ -686,7 +686,7 @@ export default function LandingPage() {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-medical-500 flex items-center justify-center">
                 <Activity className="w-5 h-5 text-white" />
               </div>
-              <span className="font-bold text-xl text-white">MedChain</span>
+              <span className="font-bold text-xl text-white">VitalChain</span>
             </div>
             <div className="flex items-center gap-6 text-slate-400 text-sm">
               <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
@@ -694,7 +694,7 @@ export default function LandingPage() {
               <a href="#" className="hover:text-white transition-colors">Documentation</a>
             </div>
             <p className="text-slate-500 text-sm">
-              © 2026 MedChain. All rights reserved.
+              © 2026 VitalChain. All rights reserved.
             </p>
           </div>
         </div>

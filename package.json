@@ -1,5 +1,5 @@
 {
-  "name": "medchain-health-exchange",
+  "name": "VitalChain-health-exchange",
   "version": "1.0.0",
   "description": "Secure Patient Health Data Exchange - Decentralized Medical Records Platform",
   "private": true,
@@ -23,6 +23,6 @@
     "ipfs",
     "decentralized"
   ],
-  "author": "MedChain Team",
+  "author": "VitalChain Team",
   "license": "MIT"
 }

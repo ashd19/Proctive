@@ -1,7 +1,7 @@
 // Contract ABIs - These will be generated after running `npx hardhat compile`
 // Copy the ABIs from blockchain/artifacts/contracts/*.sol/*.json
 
-export const MedChainCoreABI = [
+export const VitalChainCoreABI = [
   "function registerHospital(address _hospitalAddress, string memory _name, string memory _licenseNumber) external",
   "function registerDoctor(address _doctorAddress, string memory _name, string memory _licenseNumber, address _hospitalAddress) external",
   "function registerLaboratory(address _labAddress, string memory _name, string memory _licenseNumber) external",

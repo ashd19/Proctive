@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "./MedChainCore.sol";
+import "./VitalChainCore.sol";
 import "./PatientRecords.sol";
 import "./AccessControlManager.sol";
 
@@ -11,7 +11,7 @@ import "./AccessControlManager.sol";
  * @dev Tamper-evident audit logging for all medical record accesses
  */
 contract AuditLog is ReentrancyGuard {
-    MedChainCore public medChainCore;
+    VitalChainCore public VitalChainCore;
     PatientRecords public patientRecords;
     AccessControlManager public accessControl;
 
@@ -83,11 +83,11 @@ contract AuditLog is ReentrancyGuard {
     );
 
     constructor(
-        address _medChainCoreAddress,
+        address _VitalChainCoreAddress,
         address _patientRecordsAddress,
         address _accessControlAddress
     ) {
-        medChainCore = MedChainCore(_medChainCoreAddress);
+        VitalChainCore = VitalChainCore(_VitalChainCoreAddress);
         patientRecords = PatientRecords(_patientRecordsAddress);
         accessControl = AccessControlManager(_accessControlAddress);
     }
@@ -105,7 +105,7 @@ contract AuditLog is ReentrancyGuard {
         string memory _ipAddressHash,
         string memory _deviceInfoHash
     ) external nonReentrant returns (uint256) {
-        require(medChainCore.isRegisteredPatient(_patient), "Patient not registered");
+        require(VitalChainCore.isRegisteredPatient(_patient), "Patient not registered");
 
         logCounter++;
 
@@ -147,8 +147,8 @@ contract AuditLog is ReentrancyGuard {
         string memory _ipAddressHash,
         string memory _deviceInfoHash
     ) external nonReentrant returns (uint256) {
-        require(medChainCore.hasRole(medChainCore.EMERGENCY_ROLE(), msg.sender), "No emergency access rights");
-        require(medChainCore.isRegisteredPatient(_patient), "Patient not registered");
+        require(VitalChainCore.hasRole(VitalChainCore.EMERGENCY_ROLE(), msg.sender), "No emergency access rights");
+        require(VitalChainCore.isRegisteredPatient(_patient), "Patient not registered");
 
         logCounter++;
 
@@ -192,8 +192,8 @@ contract AuditLog is ReentrancyGuard {
     function flagEmergencyAccess(uint256 _logId) external {
         require(
             logs[_logId].patient == msg.sender ||
-            medChainCore.hasRole(medChainCore.DEFAULT_ADMIN_ROLE(), msg.sender) ||
-            medChainCore.hasRole(medChainCore.HOSPITAL_ROLE(), msg.sender),
+            VitalChainCore.hasRole(VitalChainCore.DEFAULT_ADMIN_ROLE(), msg.sender) ||
+            VitalChainCore.hasRole(VitalChainCore.HOSPITAL_ROLE(), msg.sender),
             "Not authorized to flag"
         );
         require(logs[_logId].isEmergencyAccess, "Not an emergency access log");

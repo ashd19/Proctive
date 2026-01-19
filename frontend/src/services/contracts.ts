@@ -2,7 +2,7 @@ import { Contract, BrowserProvider, JsonRpcSigner } from 'ethers'
 
 // Import contract ABIs and addresses
 import {
-  MedChainCoreABI,
+  VitalChainCoreABI,
   PatientRecordsABI,
   AccessControlManagerABI,
   AuditLogABI,
@@ -12,7 +12,7 @@ import {
 import { CONTRACT_ADDRESSES, getNetworkName, NetworkName } from '../contracts/addresses'
 
 export interface ContractInstances {
-  medChainCore: Contract
+  VitalChainCore: Contract
   patientRecords: Contract
   accessControl: Contract
   auditLog: Contract
@@ -26,9 +26,9 @@ export async function getContracts(
 ): Promise<ContractInstances> {
   const addresses = CONTRACT_ADDRESSES[network]
 
-  const medChainCore = new Contract(
-    addresses.MedChainCore,
-    MedChainCoreABI,
+  const VitalChainCore = new Contract(
+    addresses.VitalChainCore,
+    VitalChainCoreABI,
     signerOrProvider
   )
 
@@ -63,7 +63,7 @@ export async function getContracts(
   )
 
   return {
-    medChainCore,
+    VitalChainCore,
     patientRecords,
     accessControl,
     auditLog,
