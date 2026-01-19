@@ -2,6 +2,8 @@ import CryptoJS from 'crypto-js'
 
 // Pinata API Configuration
 const PINATA_API_KEY = '49ead6420aacfa844d00'
+const PINATA_API_SECRET = '5f281cbf0115d45bdc2cd8f9ce8835aa4898ab955e7a6b69585e5e7b72e132ce'
+const PINATA_JWT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiJjZWU4NWY2Ny0xNDE1LTRlNmUtYjk3Yi02Yjg0OGQ3ODE0OGYiLCJlbWFpbCI6ImFzaHRvbmRzb3V6YTE5MkBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGluX3BvbGljeSI6eyJyZWdpb25zIjpbeyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJGUkExIn0seyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJOWUMxIn1dLCJ2ZXJzaW9uIjoxfSwibWZhX2VuYWJsZWQiOmZhbHNlLCJzdGF0dXMiOiJBQ1RJVkUifSwiYXV0aGVudGljYXRpb25UeXBlIjoic2NvcGVkS2V5Iiwic2NvcGVkS2V5S2V5IjoiNDllYWQ2NDIwYWFjZmE4NDRkMDAiLCJzY29wZWRLZXlTZWNyZXQiOiI1ZjI4MWNiZjAxMTVkNDViZGMyY2Q4ZjljZTg4MzVhYTQ4OThhYjk1NWU3YTZiNjk1ODVlNWU3YjcyZTEzMmNlIiwiZXhwIjoxNzk5Njc5NzYwfQ.bqcsXbdSh2qYlVOPO-n98SbU9eRQSwf--AmBHJhTXW0'
 const PINATA_API_URL = 'https://api.pinata.cloud/pinning/pinJSONToIPFS'
 const PINATA_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS'
 
@@ -81,17 +83,24 @@ class IPFSService {
   }
 
   // Upload JSON to Pinata
-  private async uploadJSONToPinata(jsonData: any): Promise<string> {
+  async uploadJSON(jsonData: any, filename?: string): Promise<string> {
+    return this.uploadJSONToPinata(jsonData, filename)
+  }
+
+  // Upload JSON to Pinata
+  private async uploadJSONToPinata(jsonData: any, filename?: string): Promise<string> {
+    const name = filename ? filename : `VitalChain-${Date.now()}.json`
     const response = await fetch(PINATA_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'pinata_api_key': PINATA_API_KEY,
+        'pinata_secret_api_key': PINATA_API_SECRET,
       },
       body: JSON.stringify({
         pinataContent: jsonData,
         pinataMetadata: {
-          name: `VitalChain-${Date.now()}`,
+          name,
         },
       }),
     })
@@ -116,6 +125,7 @@ class IPFSService {
       method: 'POST',
       headers: {
         'pinata_api_key': PINATA_API_KEY,
+        'pinata_secret_api_key': PINATA_API_SECRET,
       },
       body: formData,
     })

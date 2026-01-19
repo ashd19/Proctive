@@ -82,32 +82,54 @@ export default function AddPdf() {
 
     setUploading(true)
     try {
-      // Read file as buffer
-      const arrayBuffer = await file.arrayBuffer()
-      const buffer = Buffer.from(arrayBuffer)
+      // Step 1: Convert PDF to JSON using backend
+      toast.loading('Converting PDF to structured data...', { id: 'upload' })
+      const formData2 = new FormData()
+      formData2.append('file', file)
 
-      // Upload to IPFS
-      toast.loading('Uploading to IPFS...', { id: 'upload' })
-      const hash = await services.ipfs.uploadFile(buffer, file.name)
-      setIpfsHash(hash)
+      const response = await fetch('http://localhost:5000/api/pdf/convert', {
+        method: 'POST',
+        body: formData2,
+      })
 
-      // Prepare metadata
-      const metadata: PdfMetadata = {
-        title: formData.title,
-        recordType: formData.recordType,
-        description: formData.description,
-        fileName: file.name,
-        fileSize: file.size,
-        uploadedAt: new Date().toISOString()
+      if (!response.ok) {
+        throw new Error('PDF conversion failed')
       }
 
-      // Add record to blockchain
-      toast.loading('Adding to blockchain...', { id: 'upload' })
-      await services.patientRecords.addRecord(hash, JSON.stringify(metadata))
+      const pdfData = await response.json()
+      console.log('PDF converted to JSON:', pdfData)
 
-      toast.success('PDF uploaded successfully to IPFS and blockchain!', { id: 'upload' })
+      // Step 2: Upload JSON to IPFS
+      toast.loading('Uploading JSON to IPFS...', { id: 'upload' })
+      const jsonWithMetadata = {
+        ...pdfData,
+        metadata: {
+          title: formData.title,
+          recordType: formData.recordType,
+          description: formData.description,
+          fileName: file.name,
+          fileSize: file.size,
+          uploadedAt: new Date().toISOString(),
+          uploadedBy: address,
+          group: 'patient',
+          patientAddress: address,
+        }
+      }
       
-      // Reset form after 2 seconds
+      const safeTitle = formData.title
+        ? formData.title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50)
+        : `record-${Date.now()}`
+      const jsonFileName = `${safeTitle}.json`
+      const hash = await services.ipfs.uploadJSON(jsonWithMetadata, jsonFileName)
+      setIpfsHash(hash)
+
+      // Step 3: Success
+      toast.success(
+        `JSON data uploaded to IPFS successfully! Hash: ${hash}`,
+        { id: 'upload', duration: 5000 }
+      )
+      
+      // Reset form after 3 seconds
       setTimeout(() => {
         setFile(null)
         setFormData({ title: '', recordType: '', description: '' })
@@ -115,7 +137,7 @@ export default function AddPdf() {
       }, 3000)
     } catch (error) {
       console.error('Upload error:', error)
-      toast.error('Failed to upload PDF', { id: 'upload' })
+      toast.error('Failed to upload: ' + (error as Error).message, { id: 'upload' })
     } finally {
       setUploading(false)
     }
