@@ -1,0 +1,28 @@
+{
+  "name": "medchain-health-exchange",
+  "version": "1.0.0",
+  "description": "Secure Patient Health Data Exchange - Decentralized Medical Records Platform",
+  "private": true,
+  "workspaces": [
+    "blockchain",
+    "frontend"
+  ],
+  "scripts": {
+    "blockchain:compile": "npm run compile --workspace=blockchain",
+    "blockchain:test": "npm run test --workspace=blockchain",
+    "blockchain:deploy": "npm run deploy --workspace=blockchain",
+    "frontend:dev": "npm run dev --workspace=frontend",
+    "frontend:build": "npm run build --workspace=frontend",
+    "install:all": "npm install && cd blockchain && npm install && cd ../frontend && npm install"
+  },
+  "keywords": [
+    "blockchain",
+    "healthcare",
+    "medical-records",
+    "ethereum",
+    "ipfs",
+    "decentralized"
+  ],
+  "author": "MedChain Team",
+  "license": "MIT"
+}
