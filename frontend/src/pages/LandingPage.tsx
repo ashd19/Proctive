@@ -19,6 +19,7 @@ import { useWalletStore } from '../store/walletStore'
 import toast from 'react-hot-toast'
 import { ipfsService } from '../services/ipfs'
 import { useState } from 'react'
+import Navbar from '@/components/Navbar'
 
 const features = [
   {
@@ -276,42 +277,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-medical-500 flex items-center justify-center shadow-lg shadow-primary-500/20">
-                <Activity className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-bold text-xl gradient-text">VitalChain</span>
-            </Link>
-
-            <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="nav-link">Features</a>
-              <a href="#how-it-works" className="nav-link">How It Works</a>
-              <a href="#portals" className="nav-link">Portals</a>
-            </div>
-
-            <div className="flex items-center gap-4">
-              {isConnected ? (
-                <button className="btn-primary flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4" />
-                  Connected
-                </button>
-              ) : (
-                <button
-                  onClick={handleConnect}
-                  disabled={isLoading}
-                  className="btn-primary flex items-center gap-2"
-                >
-                  <Wallet className="w-4 h-4" />
-                  {isLoading ? 'Connecting...' : 'Connect Wallet'}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar isConnected={isConnected} isLoading={isLoading} handleConnect={handleConnect}/>
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 overflow-hidden">

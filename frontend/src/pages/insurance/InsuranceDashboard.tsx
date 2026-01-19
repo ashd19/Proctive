@@ -4,6 +4,7 @@ import { DollarSign, Clock, CheckCircle, XCircle, Loader, BarChart3 } from 'luci
 import { useServices } from '../../services/useServices'
 import { useWalletStore } from '../../store/walletStore'
 import { ClaimStatus } from '../../services/insuranceClaimsService'
+import Navbar from '@/components/Navbar'
 
 export default function InsuranceDashboard() {
   const { services, loading: servicesLoading } = useServices()
@@ -66,6 +67,7 @@ export default function InsuranceDashboard() {
 
   return (
     <div className="p-8">
+      <Navbar isConnected={true} otherThanLanding={true}/>
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Insurance Dashboard</h1>

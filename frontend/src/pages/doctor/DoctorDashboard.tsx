@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Users, FileText, Shield, AlertTriangle, Loader, Clock, CheckCircle } from 'lucide-react'
 import { useServices } from '../../services/useServices'
 import { useWalletStore } from '../../store/walletStore'
+import Navbar from '@/components/Navbar'
 
 export default function DoctorDashboard() {
   const { services, loading: servicesLoading } = useServices()
@@ -63,6 +64,7 @@ export default function DoctorDashboard() {
 
   return (
     <div className="p-8">
+      <Navbar isConnected={true} otherThanLanding={true}/>
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Doctor Dashboard</h1>
