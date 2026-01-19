@@ -6,6 +6,7 @@ import { AccessControlService } from './accessControlService'
 import { AuditLogService } from './auditLogService'
 import { EmergencyAccessService } from './emergencyAccessService'
 import { InsuranceClaimsService } from './insuranceClaimsService'
+import ipfsService from './ipfs'
 
 export interface Services {
   patientRecords: PatientRecordsService | null
@@ -13,6 +14,7 @@ export interface Services {
   auditLog: AuditLogService | null
   emergencyAccess: EmergencyAccessService | null
   insuranceClaims: InsuranceClaimsService | null
+  ipfs: typeof ipfsService
 }
 
 export function useServices() {
@@ -22,7 +24,8 @@ export function useServices() {
     accessControl: null,
     auditLog: null,
     emergencyAccess: null,
-    insuranceClaims: null
+    insuranceClaims: null,
+    ipfs: ipfsService
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -35,7 +38,8 @@ export function useServices() {
           accessControl: null,
           auditLog: null,
           emergencyAccess: null,
-          insuranceClaims: null
+          insuranceClaims: null,
+          ipfs: ipfsService
         })
         setLoading(false)
         return
@@ -52,7 +56,8 @@ export function useServices() {
           accessControl: new AccessControlService(contracts.accessControl, address),
           auditLog: new AuditLogService(contracts.auditLog, address),
           emergencyAccess: new EmergencyAccessService(contracts.emergencyAccess, address),
-          insuranceClaims: new InsuranceClaimsService(contracts.insuranceClaims, address)
+          insuranceClaims: new InsuranceClaimsService(contracts.insuranceClaims, address),
+          ipfs: ipfsService
         })
       } catch (err: any) {
         console.error('Failed to initialize services:', err)
