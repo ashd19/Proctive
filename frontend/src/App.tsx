@@ -15,6 +15,7 @@ import InsuranceDashboard from './pages/insurance/InsuranceDashboard'
 import InsuranceClaimsPage from './pages/insurance/InsuranceClaimsPage'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import { useWalletStore } from './store/walletStore'
+import AddPdf from './pages/addPdf/AddPdf'
 
 function App() {
   const { checkConnection } = useWalletStore()
@@ -38,6 +39,7 @@ function App() {
         <Route path="access" element={<PatientAccess />} />
         <Route path="claims" element={<PatientClaims />} />
         <Route path="audit" element={<PatientAuditLog />} />
+        <Route path="addPdf" element={<AddPdf />} />
       </Route>
 
       {/* Doctor Routes */}
