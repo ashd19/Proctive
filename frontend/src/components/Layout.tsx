@@ -19,7 +19,8 @@ import {
   Activity,
   Copy,
   ExternalLink,
-  Check
+  Check,
+  Upload
 } from 'lucide-react'
 import { useWalletStore } from '../store/walletStore'
 import { UserRole } from '../types'
@@ -33,6 +34,7 @@ const menuItems = {
   patient: [
     { path: '/patient', label: 'Dashboard', icon: Home },
     { path: '/patient/records', label: 'Medical Records', icon: FileText },
+    { path: '/patient/addPdf', label: 'Upload PDF', icon: Upload },
     { path: '/patient/access', label: 'Access Control', icon: Shield },
     { path: '/patient/claims', label: 'Insurance Claims', icon: Receipt },
     { path: '/patient/audit', label: 'Audit Log', icon: ClipboardList },
