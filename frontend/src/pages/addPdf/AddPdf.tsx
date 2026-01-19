@@ -99,7 +99,11 @@ export default function AddPdf() {
       const pdfData = await response.json()
       console.log('PDF converted to JSON:', pdfData)
 
-      // Step 2: Upload JSON to IPFS
+      // Step 2: Upload original PDF to IPFS (so it can be retrieved later)
+      toast.loading('Uploading original PDF to IPFS...', { id: 'upload' })
+      const pdfCid = await services.ipfs.uploadToIPFS(file)
+
+      // Step 3: Upload JSON to IPFS (include pdfCid in metadata)
       toast.loading('Uploading JSON to IPFS...', { id: 'upload' })
       const jsonWithMetadata = {
         ...pdfData,
@@ -113,9 +117,11 @@ export default function AddPdf() {
           uploadedBy: address,
           group: 'patient',
           patientAddress: address,
+          pdfCid,
+          pdfUrl: `https://gateway.pinata.cloud/ipfs/${pdfCid}`,
         }
       }
-      
+
       const safeTitle = formData.title
         ? formData.title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50)
         : `record-${Date.now()}`
