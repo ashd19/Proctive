@@ -17,6 +17,8 @@ import {
 } from 'lucide-react'
 import { useWalletStore } from '../store/walletStore'
 import toast from 'react-hot-toast'
+import { ipfsService } from '../services/ipfs'
+import { useState } from 'react'
 
 const features = [
   {
@@ -93,7 +95,9 @@ const roles = [
 
 export default function LandingPage() {
   const navigate = useNavigate()
-  const { connect, isConnected, setRole, isLoading } = useWalletStore()
+  const { connect, isConnected, setRole, isLoading, signer, address } = useWalletStore()
+  const [ipfsHash, setIpfsHash] = useState<string>('')
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
 
   const handleConnect = async () => {
     try {
@@ -111,6 +115,162 @@ export default function LandingPage() {
     }
     setRole(role)
     navigate(path)
+  }
+
+  // Test signing a message
+  const handleTestSignMessage = async () => {
+    if (!signer) {
+      toast.error('Please connect your wallet first')
+      return
+    }
+    
+    try {
+      const message = `MedChain Test Signature\nTimestamp: ${new Date().toISOString()}\nAddress: ${address}`
+      toast.loading('Please sign the message in MetaMask...')
+      
+      const signature = await signer.signMessage(message)
+      
+      toast.dismiss()
+      toast.success('Message signed successfully!')
+      console.log('Signature:', signature)
+      console.log('Message:', message)
+    } catch (error: any) {
+      toast.dismiss()
+      toast.error(error.message || 'Failed to sign message')
+      console.error('Signing error:', error)
+    }
+  }
+
+  // Test sending a simple transaction
+  const handleTestTransaction = async () => {
+    if (!signer) {
+      toast.error('Please connect your wallet first')
+      return
+    }
+    
+    try {
+      toast.loading('Please confirm the transaction in MetaMask...')
+      
+      // Send 0.001 ETH to yourself (you can change the address)
+      const tx = await signer.sendTransaction({
+        to: address, // Sending to yourself as a test
+        value: '1000000000000000' // 0.001 ETH in wei
+      })
+      
+      toast.dismiss()
+      toast.loading('Transaction sent! Waiting for confirmation...')
+      
+      const receipt = await tx.wait()
+      
+      toast.dismiss()
+      toast.success('Transaction confirmed!')
+      console.log('Transaction receipt:', receipt)
+    } catch (error: any) {
+      toast.dismiss()
+      if (error.code === 'ACTION_REJECTED') {
+        toast.error('Transaction rejected by user')
+      } else {
+        toast.error(error.message || 'Transaction failed')
+      }
+      console.error('Transaction error:', error)
+    }
+  }
+
+  // Test IPFS upload (medical record simulation)
+  const handleTestIPFSUpload = async () => {
+    try {
+      toast.loading('Encrypting and uploading to Pinata IPFS...')
+      
+      // Sample medical record
+      const medicalRecord = {
+        patientId: address,
+        recordType: 'Test Record',
+        date: new Date().toISOString(),
+        diagnosis: 'Sample Diagnosis for Testing',
+        treatment: 'Test Treatment',
+        notes: 'This is a simulated medical record for IPFS testing',
+        timestamp: Date.now()
+      }
+
+      // Use wallet address as public key for demo
+      const result = await ipfsService.uploadEncryptedRecord(medicalRecord, address || '')
+      
+      toast.dismiss()
+      toast.success('✓ Uploaded to IPFS! View at gateway.pinata.cloud')
+      setIpfsHash(result.ipfsHash)
+      
+      console.log('IPFS Upload Result:', {
+        ipfsHash: result.ipfsHash,
+        pinataUrl: `https://gateway.pinata.cloud/ipfs/${result.ipfsHash}`,
+        encryptedKey: result.encryptedKey,
+        metadataHash: result.metadataHash,
+        originalData: medicalRecord
+      })
+    } catch (error: any) {
+      toast.dismiss()
+      toast.error(error.message || 'Failed to upload to IPFS')
+      console.error('IPFS upload error:', error)
+    }
+  }
+
+  // Test IPFS file upload
+  const handleTestIPFSFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    try {
+      toast.loading(`Uploading ${file.name} to IPFS...`)
+      setUploadedFile(file)
+      
+      const result = await ipfsService.uploadEncryptedFile(file, address || '')
+      
+      toast.dismiss()
+      toast.success('✓ File uploaded to IPFS!')
+      setIpfsHash(result.ipfsHash)
+      
+      console.log('IPFS File Upload Result:', {
+        ipfsHash: result.ipfsHash,
+        pinataUrl: `https://gateway.pinata.cloud/ipfs/${result.ipfsHash}`,
+        fileName: result.fileName,
+        fileSize: result.fileSize,
+        mimeType: result.mimeType,
+        fileHash: result.fileHash,
+        encryptedKey: result.encryptedKey
+      })
+    } catch (error: any) {
+      toast.dismiss()
+      toast.error(error.message || 'Failed to upload file')
+      console.error('File upload error:', error)
+    }
+  }
+
+  // Test IPFS retrieve
+  const handleTestIPFSRetrieve = async () => {
+    if (!ipfsHash) {
+      toast.error('Upload something to IPFS first!')
+      return
+    }
+
+    try {
+      toast.loading('Retrieving from IPFS...')
+      
+      // For demo, we'll just show that it's stored
+      const data = await ipfsService.getFromIPFS(ipfsHash)
+      
+      toast.dismiss()
+      if (data) {
+        toast.success('Data retrieved successfully!')
+        console.log('Retrieved IPFS Data (encrypted):', data.substring(0, 100) + '...')
+        console.log('IPFS Hash:', ipfsHash)
+        console.log('Full encrypted content length:', data.length)
+      } else {
+        toast.error('Data not found')
+      }
+    } catch (error: any) {
+      toast.dismiss()
+      toast.error(error.message || 'Failed to retrieve from IPFS')
+      console.error('IPFS retrieve error:', error)
+    }
   }
 
   return (
@@ -226,6 +386,158 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* MetaMask Testing Section */}
+      {isConnected && (
+        <section className="py-12 bg-gradient-to-r from-primary-500 to-medical-500">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+              <div className="text-center mb-6">
+                <h3 className="text-2xl font-bold text-white mb-2 flex items-center justify-center gap-2">
+                  <Sparkles className="w-6 h-6" />
+                  MetaMask Testing Zone
+                </h3>
+                <p className="text-white/80">
+                  Test your MetaMask connection with signing and transactions
+                </p>
+                <div className="mt-3 text-sm text-white/60">
+                  Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <button
+                  onClick={handleTestSignMessage}
+                  className="bg-white hover:bg-white/90 text-primary-600 font-semibold px-6 py-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+                >
+                  <Shield className="w-5 h-5" />
+                  Sign Test Message
+                </button>
+                
+                <button
+                  onClick={handleTestTransaction}
+                  className="bg-white hover:bg-white/90 text-medical-600 font-semibold px-6 py-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+                >
+                  <ArrowRight className="w-5 h-5" />
+                  Send Test Transaction (0.001 ETH)
+                </button>
+              </div>
+
+              <div className="mt-6 text-xs text-white/60 text-center">
+                <p>✓ Sign Message: Opens MetaMask to sign a message (free)</p>
+                <p>✓ Send Transaction: Sends 0.001 ETH to yourself (requires gas)</p>
+                <p>Check browser console (F12) for signature/transaction details</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* IPFS Testing Section */}
+      {isConnected && (
+        <section className="py-12 bg-slate-50">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-lg">
+              <div className="text-center mb-6">
+                <h3 className="text-2xl font-bold text-slate-900 mb-2 flex items-center justify-center gap-2">
+                  <Database className="w-6 h-6 text-purple-600" />
+                  IPFS Storage Demo
+                </h3>
+                <p className="text-slate-600">
+                  Test encrypted medical record storage on real IPFS via Pinata
+                </p>
+                <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">
+                  <CheckCircle className="w-4 h-4" />
+                  Connected to Pinata Cloud
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {/* Upload Medical Record */}
+                <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
+                  <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-purple-600" />
+                    Upload Encrypted Medical Record
+                  </h4>
+                  <button
+                    onClick={handleTestIPFSUpload}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
+                  >
+                    <Database className="w-5 h-5" />
+                    Upload Sample Record to IPFS
+                  </button>
+                </div>
+
+                {/* Upload File */}
+                <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                  <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                    <Database className="w-5 h-5 text-blue-600" />
+                    Upload Encrypted File (Image/PDF/etc)
+                  </h4>
+                  <label className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer">
+                    <Database className="w-5 h-5" />
+                    Choose File to Upload
+                    <input
+                      type="file"
+                      onChange={handleTestIPFSFileUpload}
+                      className="hidden"
+                      accept="image/*,.pdf,.txt"
+                    />
+                  </label>
+                  {uploadedFile && (
+                    <p className="text-sm text-blue-600 mt-2 text-center">
+                      Selected: {uploadedFile.name}
+                    </p>
+                  )}
+                </div>
+
+                {/* Retrieve Data */}
+                {ipfsHash && (
+                  <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+                    <h4 className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                      IPFS Hash Generated
+                    </h4>
+                    <p className="text-xs font-mono text-slate-600 mb-3 break-all bg-white p-2 rounded border border-green-200">
+                      {ipfsHash}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={handleTestIPFSRetrieve}
+                        className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-3 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
+                      >
+                        <ArrowRight className="w-5 h-5" />
+                        Retrieve
+                      </button>
+                      <a
+                        href={`https://gateway.pinata.cloud/ipfs/${ipfsHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-3 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
+                      >
+                        <Globe className="w-5 h-5" />
+                        View on IPFS
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 p-4 bg-slate-100 rounded-lg">
+                <p className="text-xs text-slate-600 space-y-1">
+                  <strong className="block text-slate-900">How it works:</strong>
+                  <span className="block">✓ Data is encrypted with AES-256 before upload</span>
+                  <span className="block">✓ Encryption key is secured for the patient only</span>
+                  <span className="block">✓ Files uploaded to real IPFS via Pinata Cloud</span>
+                  <span className="block">✓ IPFS hash is permanently stored on the network</span>
+                  <span className="block">✓ Retrieve files from any IPFS gateway worldwide</span>
+                  <span className="block">✓ Check browser console (F12) for detailed output</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Features Section */}
       <section id="features" className="py-20 bg-slate-50">

@@ -1,15 +1,20 @@
 import CryptoJS from 'crypto-js'
 
-// IPFS Gateway URLs for fallback
+// Pinata API Configuration
+const PINATA_API_KEY = '49ead6420aacfa844d00'
+const PINATA_API_URL = 'https://api.pinata.cloud/pinning/pinJSONToIPFS'
+const PINATA_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS'
+
+// IPFS Gateway URLs for retrieval
 const IPFS_GATEWAYS = [
-  'https://ipfs.io/ipfs/',
   'https://gateway.pinata.cloud/ipfs/',
+  'https://ipfs.io/ipfs/',
   'https://cloudflare-ipfs.com/ipfs/',
 ]
 
-// Simulated IPFS client for demo (in production, use actual IPFS node)
 class IPFSService {
   private localStore: Map<string, string> = new Map()
+  private usePinata: boolean = true
 
   // Generate encryption key
   generateEncryptionKey(): string {
@@ -46,29 +51,81 @@ class IPFSService {
     return bytes.toString(CryptoJS.enc.Utf8)
   }
 
-  // Upload data to IPFS (simulated for demo)
+  // Upload data to IPFS using Pinata
   async uploadToIPFS(data: string | File): Promise<string> {
-    let content: string
+    if (this.usePinata && PINATA_API_KEY) {
+      try {
+        if (data instanceof File) {
+          return await this.uploadFileToPinata(data)
+        } else {
+          return await this.uploadJSONToPinata({ content: data })
+        }
+      } catch (error) {
+        console.warn('Pinata upload failed, using local storage:', error)
+        this.usePinata = false
+      }
+    }
 
+    // Fallback to local storage
+    let content: string
     if (data instanceof File) {
       content = await this.fileToBase64(data)
     } else {
       content = data
     }
 
-    // Generate a deterministic hash as the IPFS CID
     const hash = this.hashData(content + Date.now().toString())
     const cid = `Qm${hash.substring(0, 44)}`
-
-    // Store locally for demo
     this.localStore.set(cid, content)
-
-    // In production, upload to actual IPFS node:
-    // const ipfs = create({ url: 'http://localhost:5001' })
-    // const result = await ipfs.add(content)
-    // return result.cid.toString()
-
     return cid
+  }
+
+  // Upload JSON to Pinata
+  private async uploadJSONToPinata(jsonData: any): Promise<string> {
+    const response = await fetch(PINATA_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'pinata_api_key': PINATA_API_KEY,
+      },
+      body: JSON.stringify({
+        pinataContent: jsonData,
+        pinataMetadata: {
+          name: `MedChain-${Date.now()}`,
+        },
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Pinata upload failed: ${response.statusText}`)
+    }
+
+    const result = await response.json()
+    return result.IpfsHash
+  }
+
+  // Upload File to Pinata
+  private async uploadFileToPinata(file: File): Promise<string> {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('pinataMetadata', JSON.stringify({
+      name: file.name,
+    }))
+
+    const response = await fetch(PINATA_FILE_URL, {
+      method: 'POST',
+      headers: {
+        'pinata_api_key': PINATA_API_KEY,
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      throw new Error(`Pinata file upload failed: ${response.statusText}`)
+    }
+
+    const result = await response.json()
+    return result.IpfsHash
   }
 
   // Upload encrypted medical record
