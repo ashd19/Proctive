@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { useEffect } from 'react'
 import Layout from './components/Layout'
+import ProtectedRoute from './components/ProtectedRoute'
 import LandingPage from './pages/LandingPage'
 import PatientDashboard from './pages/patient/PatientDashboard'
 import PatientRecords from './pages/patient/PatientRecords'
@@ -27,7 +28,11 @@ function App() {
       <Route path="/" element={<LandingPage />} />
       
       {/* Patient Routes */}
-      <Route path="/patient" element={<Layout role="patient" />}>
+      <Route path="/patient" element={
+        <ProtectedRoute requiredRole="patient">
+          <Layout role="patient" />
+        </ProtectedRoute>
+      }>
         <Route index element={<PatientDashboard />} />
         <Route path="records" element={<PatientRecords />} />
         <Route path="access" element={<PatientAccess />} />
@@ -36,20 +41,32 @@ function App() {
       </Route>
 
       {/* Doctor Routes */}
-      <Route path="/doctor" element={<Layout role="doctor" />}>
+      <Route path="/doctor" element={
+        <ProtectedRoute requiredRole="doctor">
+          <Layout role="doctor" />
+        </ProtectedRoute>
+      }>
         <Route index element={<DoctorDashboard />} />
         <Route path="patients" element={<DoctorPatients />} />
         <Route path="emergency" element={<DoctorEmergency />} />
       </Route>
 
       {/* Insurance Routes */}
-      <Route path="/insurance" element={<Layout role="insurance" />}>
+      <Route path="/insurance" element={
+        <ProtectedRoute requiredRole="insurance">
+          <Layout role="insurance" />
+        </ProtectedRoute>
+      }>
         <Route index element={<InsuranceDashboard />} />
         <Route path="claims" element={<InsuranceClaimsPage />} />
       </Route>
 
       {/* Admin Routes */}
-      <Route path="/admin" element={<Layout role="admin" />}>
+      <Route path="/admin" element={
+        <ProtectedRoute requiredRole="admin">
+          <Layout role="admin" />
+        </ProtectedRoute>
+      }>
         <Route index element={<AdminDashboard />} />
       </Route>
     </Routes>
