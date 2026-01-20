@@ -20,6 +20,7 @@ import toast from 'react-hot-toast'
 import { ipfsService } from '../services/ipfs'
 import { useState } from 'react'
 import Navbar from '@/components/Navbar'
+import ColourfulText from '@/components/ui/colourful-text'
 
 const features = [
   {
@@ -300,7 +301,7 @@ export default function LandingPage() {
               
               <h1 className="text-5xl md:text-7xl font-bold text-slate-900 mb-6 leading-tight">
                 Secure Patient Health
-                <span className="gradient-text block">Data Exchange</span>
+                <p><ColourfulText text='Data Exchange'/></p>
               </h1>
               
               <p className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto">

@@ -3,6 +3,17 @@ import { useNavigate } from "react-router-dom"
 import { supabase } from "@/lib/supabaseClient"
 import { motion } from "framer-motion"
 import { Lock, Mail, Shield, User, ChevronRight, HeartPulse, CheckCircle2 } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export default function Auth() {
   const [email, setEmail] = useState("")
@@ -216,14 +227,35 @@ export default function Auth() {
                       </>
                     )}
                   </button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button
+                        onClick={signUp}
+                        disabled={loading}
+                        className="w-full bg-white hover:bg-slate-50 text-slate-700 font-bold py-3.5 px-6 rounded-lg border-2 border-slate-200 hover:border-slate-300 transition-all text-sm uppercase tracking-wide"
+                      >
+                        {loading ? "Sending..." : "Register New ID"}
+                      </button>
+                    </AlertDialogTrigger>
 
-                  <button
-                    onClick={signUp}
-                    disabled={loading}
-                    className="w-full bg-white hover:bg-slate-50 text-slate-700 font-bold py-3.5 px-6 rounded-lg border-2 border-slate-200 hover:border-slate-300 transition-all text-sm uppercase tracking-wide"
-                  >
-                    Register New ID
-                  </button>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm Your Email</AlertDialogTitle>
+                        <AlertDialogDescription className="mt-2">
+                          📩 A confirmation email has been sent to your registered email address.
+                          <br />
+                          Please check your inbox and click the verification link to activate your account.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+
+                      <div className="flex justify-end mt-4">
+                        <AlertDialogAction className="bg-slate-900 text-white">
+                          Got it
+                        </AlertDialogAction>
+                      </div>
+                    </AlertDialogContent>
+                  </AlertDialog>
+
                 </div>
               </div>
 
