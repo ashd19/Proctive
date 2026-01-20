@@ -61,14 +61,15 @@ export default function DoctorPatients() {
   };
 
   const handleViewRecord = async (record: MedicalRecord) => {
-    if (!services.patientRecords || !services.auditLog || !address) return;
+    if (!services.patientRecords || !address) return;
 
     try {
       toast.loading("Loading record...");
       const data = await services.patientRecords.getRecordData(record);
 
-      // Log the access
-      if (address) {
+      // Log the access - wait for transaction to succeed
+      if (address && services.auditLog) {
+        toast.loading("Logging access to blockchain...");
         await services.auditLog.logAccess(
           record.patient,
           record.id,
@@ -82,36 +83,196 @@ export default function DoctorPatients() {
       }
 
       toast.dismiss();
+      toast.success("✓ Access logged successfully");
 
       // Display the record
       const recordWindow = window.open("", "_blank");
       if (recordWindow) {
-        recordWindow.document.write(`
-          <html>
-            <head>
-              <title>${data.title || "Medical Record"}</title>
-              <style>
-                body { font-family: system-ui; padding: 2rem; max-width: 800px; margin: 0 auto; }
-                h1 { color: #1e293b; }
-                .metadata { background: #f1f5f9; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
-                .content { white-space: pre-wrap; line-height: 1.6; }
-              </style>
-            </head>
-            <body>
-              <h1>${data.title || "Medical Record"}</h1>
-              <div class="metadata">
-                <strong>Type:</strong> ${data.type || "N/A"}<br>
-                <strong>Date:</strong> ${data.date || "N/A"}
-              </div>
-              <div class="content">${
-                data.content || data.description || "No content"
-              }</div>
-            </body>
-          </html>
-        `);
-      }
+        // Check if data contains file information (PDF or image)
+        const isFile = data.fileData || data.mimeType || data.fileName;
+        const mimeType = data.mimeType || "";
 
-      toast.success("✓ Record accessed and logged");
+        if (isFile && mimeType.includes("pdf")) {
+          // Display PDF
+          const pdfUrl =
+            data.fileUrl ||
+            `https://gateway.pinata.cloud/ipfs/${record.ipfsHash}`;
+          recordWindow.document.write(`
+            <html>
+              <head>
+                <title>${
+                  data.title || data.fileName || "PDF Medical Record"
+                }</title>
+                <style>
+                  body { margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; }
+                  .header { background: #1e293b; color: white; padding: 1rem; text-align: center; display: flex; justify-content: space-between; align-items: center; }
+                  .header-info { flex: 1; }
+                  .actions { display: flex; gap: 0.5rem; }
+                  .btn { background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 0.5rem; }
+                  .btn:hover { background: #2563eb; }
+                  iframe { flex: 1; border: none; }
+                </style>
+              </head>
+              <body>
+                <div class="header">
+                  <div class="header-info">
+                    <h2 style="margin: 0;">${
+                      data.title || data.fileName || "PDF Medical Record"
+                    }</h2>
+                    <p style="margin: 0.25rem 0 0 0; font-size: 14px;">Type: PDF Document | Size: ${
+                      data.fileSize
+                        ? Math.round(data.fileSize / 1024) + " KB"
+                        : "N/A"
+                    }</p>
+                  </div>
+                  <div class="actions">
+                    <button class="btn" onclick="window.open('${pdfUrl}', '_blank')">📥 Download</button>
+                    <button class="btn" onclick="navigator.clipboard.writeText('${pdfUrl}').then(() => alert('Link copied to clipboard!'))">📋 Copy Link</button>
+                  </div>
+                </div>
+                <iframe src="${pdfUrl}" type="application/pdf"></iframe>
+              </body>
+            </html>
+          `);
+        } else if (isFile && mimeType.includes("image")) {
+          // Display Image
+          const imageUrl =
+            data.fileUrl ||
+            `https://gateway.pinata.cloud/ipfs/${record.ipfsHash}`;
+          recordWindow.document.write(`
+            <html>
+              <head>
+                <title>${data.title || data.fileName || "Medical Image"}</title>
+                <style>
+                  body { font-family: system-ui; padding: 0; margin: 0; background: #f1f5f9; }
+                  .header { background: #1e293b; color: white; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+                  .header-info { flex: 1; }
+                  .actions { display: flex; gap: 0.5rem; }
+                  .btn { background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 0.5rem; }
+                  .btn:hover { background: #2563eb; }
+                  .image-container { padding: 2rem; text-align: center; }
+                  img { max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                </style>
+              </head>
+              <body>
+                <div class="header">
+                  <div class="header-info">
+                    <h2 style="margin: 0;">${
+                      data.title || data.fileName || "Medical Image"
+                    }</h2>
+                    <p style="margin: 0.25rem 0 0 0;">Type: ${mimeType} | Size: ${
+            data.fileSize ? Math.round(data.fileSize / 1024) + " KB" : "N/A"
+          }</p>
+                  </div>
+                  <div class="actions">
+                    <a href="${imageUrl}" download="${
+            data.fileName || "medical-image"
+          }" class="btn" style="text-decoration: none;">📥 Download</a>
+                    <button class="btn" onclick="navigator.clipboard.writeText('${imageUrl}').then(() => alert('Link copied to clipboard!'))">📋 Copy Link</button>
+                  </div>
+                </div>
+                <div class="image-container">
+                  <img src="${imageUrl}" alt="Medical Image" />
+                </div>
+              </body>
+            </html>
+          `);
+        } else {
+          // Display JSON/Text Data
+          const contentHtml =
+            typeof data === "object"
+              ? `<pre id="recordData">${JSON.stringify(data, null, 2)}</pre>`
+              : data.content ||
+                data.description ||
+                data.notes ||
+                JSON.stringify(data);
+
+          const jsonData =
+            typeof data === "object"
+              ? JSON.stringify(data, null, 2)
+              : contentHtml;
+
+          recordWindow.document.write(`
+            <html>
+              <head>
+                <title>${data.title || "Medical Record"}</title>
+                <style>
+                  body { font-family: system-ui; padding: 2rem; max-width: 900px; margin: 0 auto; background: #f8fafc; }
+                  .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+                  h1 { color: #1e293b; border-bottom: 3px solid #3b82f6; padding-bottom: 0.5rem; margin: 0; }
+                  .actions { display: flex; gap: 0.5rem; }
+                  .btn { background: #3b82f6; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 14px; }
+                  .btn:hover { background: #2563eb; }
+                  .metadata { background: white; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+                  .metadata-item { margin: 0.5rem 0; }
+                  .metadata-label { font-weight: 600; color: #475569; }
+                  .content { background: white; padding: 1.5rem; border-radius: 8px; line-height: 1.8; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+                  pre { background: #f1f5f9; padding: 1rem; border-radius: 4px; overflow-x: auto; }
+                </style>
+                <script>
+                  function copyContent() {
+                    const content = ${JSON.stringify(jsonData)};
+                    navigator.clipboard.writeText(content).then(() => {
+                      alert('Record data copied to clipboard!');
+                    }).catch(err => {
+                      console.error('Copy failed:', err);
+                      alert('Failed to copy. Please select and copy manually.');
+                    });
+                  }
+                  
+                  function downloadContent() {
+                    const content = ${JSON.stringify(jsonData)};
+                    const blob = new Blob([content], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = '${(data.title || "medical-record").replace(
+                      /[^a-z0-9]/gi,
+                      "-",
+                    )}.json';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }
+                </script>
+              </head>
+              <body>
+                <div class="header-actions">
+                  <h1>${data.title || "Medical Record"}</h1>
+                  <div class="actions">
+                    <button class="btn" onclick="copyContent()">📋 Copy Data</button>
+                    <button class="btn" onclick="downloadContent()">📥 Download JSON</button>
+                  </div>
+                </div>
+                <div class="metadata">
+                  <div class="metadata-item"><span class="metadata-label">Type:</span> ${
+                    data.recordType || record.metadata.recordType || "N/A"
+                  }</div>
+                  <div class="metadata-item"><span class="metadata-label">Hospital:</span> ${
+                    data.hospitalName || record.metadata.hospitalName || "N/A"
+                  }</div>
+                  <div class="metadata-item"><span class="metadata-label">Doctor:</span> ${
+                    data.doctorName || record.metadata.doctorName || "N/A"
+                  }</div>
+                  <div class="metadata-item"><span class="metadata-label">Date:</span> ${new Date(
+                    record.createdAt * 1000,
+                  ).toLocaleDateString()}</div>
+                  ${
+                    data.diagnosis
+                      ? `<div class="metadata-item"><span class="metadata-label">Diagnosis:</span> ${data.diagnosis}</div>`
+                      : ""
+                  }
+                  ${
+                    data.treatment
+                      ? `<div class="metadata-item"><span class="metadata-label">Treatment:</span> ${data.treatment}</div>`
+                      : ""
+                  }
+                </div>
+                <div class="content">${contentHtml}</div>
+              </body>
+            </html>
+          `);
+        }
+      }
     } catch (error: any) {
       toast.dismiss();
       toast.error(error.message || "Failed to view record");
@@ -254,39 +415,41 @@ export default function DoctorPatients() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {patientRecords.map((record) => (
-                    <div
-                      key={record.id}
-                      className="bg-slate-50 rounded-lg p-4 hover:bg-slate-100 transition-colors"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-slate-900 mb-1">
-                            {record.metadata.title}
-                          </h3>
-                          <p className="text-sm text-slate-600 mb-2">
-                            {record.metadata.description}
-                          </p>
-                          <div className="flex items-center gap-4 text-xs text-slate-500">
-                            <span>Type: {record.metadata.recordType}</span>
-                            <span>•</span>
-                            <span>
-                              {new Date(
-                                record.createdAt * 1000,
-                              ).toLocaleDateString()}
-                            </span>
+                  {patientRecords
+                    .sort((a, b) => b.createdAt - a.createdAt)
+                    .map((record) => (
+                      <div
+                        key={record.id}
+                        className="bg-slate-50 rounded-lg p-4 hover:bg-slate-100 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-slate-900 mb-1">
+                              {record.metadata.title}
+                            </h3>
+                            <p className="text-sm text-slate-600 mb-2">
+                              {record.metadata.description}
+                            </p>
+                            <div className="flex items-center gap-4 text-xs text-slate-500">
+                              <span>Type: {record.metadata.recordType}</span>
+                              <span>•</span>
+                              <span>
+                                {new Date(
+                                  record.createdAt * 1000,
+                                ).toLocaleDateString()}
+                              </span>
+                            </div>
                           </div>
+                          <button
+                            onClick={() => handleViewRecord(record)}
+                            className="btn-secondary flex items-center gap-2"
+                          >
+                            <FileText className="w-4 h-4" />
+                            View
+                          </button>
                         </div>
-                        <button
-                          onClick={() => handleViewRecord(record)}
-                          className="btn-secondary flex items-center gap-2"
-                        >
-                          <FileText className="w-4 h-4" />
-                          View
-                        </button>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               )}
             </motion.div>
@@ -318,7 +481,7 @@ function RequestConsentModal({
   onClose,
   onSuccess,
   services,
-  doctorAddress,
+  doctorAddress: _doctorAddress,
 }: any) {
   const [requesting, setRequesting] = useState(false);
   const [patientAddress, setPatientAddress] = useState("");

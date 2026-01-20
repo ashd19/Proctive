@@ -48,10 +48,11 @@ export class AuditLogService {
         ipAddressHash,
         deviceInfoHash,
       );
+
       await tx.wait();
     } catch (error: any) {
       console.error("Error logging access:", error);
-      throw new Error(error.message || "Failed to log access");
+      throw new Error(error.reason || error.message || "Failed to log access");
     }
   }
 
@@ -77,19 +78,32 @@ export class AuditLogService {
   // Get patient's audit logs
   async getPatientLogs(patientAddress: string): Promise<AuditLogEntry[]> {
     try {
-      const logs = await this.auditLogContract.getPatientLogs(patientAddress);
+      const logIds = await this.auditLogContract.getPatientLogIds(
+        patientAddress,
+      );
 
-      return logs.map((log: any) => ({
-        id: Number(log.id),
-        patient: log.patient,
-        accessor: log.accessor,
-        recordId: Number(log.recordId),
-        accessType: Number(log.accessType),
-        timestamp: Number(log.timestamp),
-        ipAddress: log.ipAddress,
-        purpose: log.purpose,
-        wasEmergency: log.wasEmergency,
-      }));
+      if (!logIds || logIds.length === 0) {
+        return [];
+      }
+
+      const logs = await Promise.all(
+        logIds.map(async (logId: bigint) => {
+          const log = await this.auditLogContract.getLog(Number(logId));
+          return {
+            id: Number(log.id || logId),
+            patient: log.patient,
+            accessor: log.accessor,
+            recordId: Number(log.recordId),
+            accessType: Number(log.accessType),
+            timestamp: Number(log.timestamp),
+            ipAddress: log.ipAddress,
+            purpose: log.emergencyReason,
+            wasEmergency: log.isEmergencyAccess,
+          };
+        }),
+      );
+
+      return logs;
     } catch (error: any) {
       console.error("Error fetching patient logs:", error);
       return [];
