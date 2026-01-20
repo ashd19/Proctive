@@ -1,92 +1,74 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import {
-  Users,
-  FileText,
-  Shield,
-  AlertTriangle,
-  Loader,
-  Clock,
-  CheckCircle,
-} from "lucide-react";
-import { useServices } from "../../services/useServices";
-import { useWalletStore } from "../../store/walletStore";
-import Navbar from "@/components/Navbar";
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import { Users, FileText, Shield, AlertTriangle, Loader, Clock, CheckCircle } from 'lucide-react'
+import { useServices } from '../../services/useServices'
+import { useWalletStore } from '../../store/walletStore'
+import Navbar from '@/components/Navbar'
 
 export default function DoctorDashboard() {
-  const { services, loading: servicesLoading } = useServices();
-  const { address, disconnect } = useWalletStore();
-
+  const { services, loading: servicesLoading } = useServices()
+  const { address } = useWalletStore()
+  
   const [stats, setStats] = useState({
     accessiblePatients: 0,
     pendingRequests: 0,
     emergencyAccesses: 0,
-    totalRecordsViewed: 0,
-  });
-  const [loading, setLoading] = useState(true);
+    totalRecordsViewed: 0
+  })
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadDashboardData() {
       if (!services.accessControl || !services.emergencyAccess || !address) {
-        setLoading(false);
-        return;
+        setLoading(false)
+        return
       }
 
       try {
-        setLoading(true);
-
+        setLoading(true)
+        
         const [patients, requests, emergencyLogs] = await Promise.all([
           services.accessControl.getRequesterAccessiblePatients(address),
           services.accessControl.getRequesterConsentRequests(address),
-          services.emergencyAccess.getDoctorEmergencyLogs(address),
-        ]);
+          services.emergencyAccess.getDoctorEmergencyLogs(address)
+        ])
 
-        const pendingCount = requests.filter((r: any) => r.status === 0).length;
-        const unresolvedEmergencies = emergencyLogs.filter(
-          (log: any) => !log.wasResolved,
-        ).length;
+        const pendingCount = requests.filter((r: any) => r.status === 0).length
+        const unresolvedEmergencies = emergencyLogs.filter((log: any) => !log.wasResolved).length
 
         setStats({
           accessiblePatients: patients.length,
           pendingRequests: pendingCount,
           emergencyAccesses: unresolvedEmergencies,
-          totalRecordsViewed: patients.length * 2, // Approximate
-        });
+          totalRecordsViewed: patients.length * 2 // Approximate
+        })
       } catch (error: any) {
-        console.error("Error loading dashboard data:", error);
+        console.error('Error loading dashboard data:', error)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     }
 
     if (!servicesLoading) {
-      loadDashboardData();
+      loadDashboardData()
     }
-  }, [services, address, servicesLoading]);
+  }, [services, address, servicesLoading])
 
   if (servicesLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader className="w-8 h-8 animate-spin text-primary-600" />
       </div>
-    );
+    )
   }
 
   return (
     <div className="p-8">
-      <Navbar
-        isConnected={true}
-        handleDisconnect={disconnect}
-        otherThanLanding={true}
-      />
+      <Navbar otherThanLanding={true}/>
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            Doctor Dashboard
-          </h1>
-          <p className="text-slate-600">
-            Welcome back, Doctor! Here's your patient overview
-          </p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Doctor Dashboard</h1>
+          <p className="text-slate-600">Welcome back, Doctor! Here's your patient overview</p>
         </div>
 
         {/* Stats Grid */}
@@ -102,9 +84,7 @@ export default function DoctorDashboard() {
               </div>
               <CheckCircle className="w-5 h-5 text-white/60" />
             </div>
-            <div className="text-3xl font-bold mb-1">
-              {stats.accessiblePatients}
-            </div>
+            <div className="text-3xl font-bold mb-1">{stats.accessiblePatients}</div>
             <div className="text-blue-100 text-sm">Accessible Patients</div>
           </motion.div>
 
@@ -119,14 +99,10 @@ export default function DoctorDashboard() {
                 <Clock className="w-6 h-6" />
               </div>
               {stats.pendingRequests > 0 && (
-                <span className="bg-white/20 px-2 py-1 rounded-full text-xs">
-                  New
-                </span>
+                <span className="bg-white/20 px-2 py-1 rounded-full text-xs">New</span>
               )}
             </div>
-            <div className="text-3xl font-bold mb-1">
-              {stats.pendingRequests}
-            </div>
+            <div className="text-3xl font-bold mb-1">{stats.pendingRequests}</div>
             <div className="text-amber-100 text-sm">Pending Requests</div>
           </motion.div>
 
@@ -141,14 +117,10 @@ export default function DoctorDashboard() {
                 <AlertTriangle className="w-6 h-6" />
               </div>
               {stats.emergencyAccesses > 0 && (
-                <span className="bg-white/20 px-2 py-1 rounded-full text-xs font-semibold">
-                  !
-                </span>
+                <span className="bg-white/20 px-2 py-1 rounded-full text-xs font-semibold">!</span>
               )}
             </div>
-            <div className="text-3xl font-bold mb-1">
-              {stats.emergencyAccesses}
-            </div>
+            <div className="text-3xl font-bold mb-1">{stats.emergencyAccesses}</div>
             <div className="text-red-100 text-sm">Unresolved Emergencies</div>
           </motion.div>
 
@@ -164,9 +136,7 @@ export default function DoctorDashboard() {
               </div>
               <Shield className="w-5 h-5 text-white/60" />
             </div>
-            <div className="text-3xl font-bold mb-1">
-              {stats.totalRecordsViewed}
-            </div>
+            <div className="text-3xl font-bold mb-1">{stats.totalRecordsViewed}</div>
             <div className="text-green-100 text-sm">Records Accessed</div>
           </motion.div>
         </div>
@@ -182,12 +152,8 @@ export default function DoctorDashboard() {
                 <Users className="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-slate-900 mb-1">
-                  View Patients
-                </h3>
-                <p className="text-sm text-slate-600">
-                  Access patient medical records
-                </p>
+                <h3 className="font-semibold text-slate-900 mb-1">View Patients</h3>
+                <p className="text-sm text-slate-600">Access patient medical records</p>
               </div>
             </div>
           </a>
@@ -201,12 +167,8 @@ export default function DoctorDashboard() {
                 <AlertTriangle className="w-6 h-6 text-red-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-slate-900 mb-1">
-                  Emergency Access
-                </h3>
-                <p className="text-sm text-slate-600">
-                  Request emergency record access
-                </p>
+                <h3 className="font-semibold text-slate-900 mb-1">Emergency Access</h3>
+                <p className="text-sm text-slate-600">Request emergency record access</p>
               </div>
             </div>
           </a>
@@ -220,12 +182,8 @@ export default function DoctorDashboard() {
                 <Shield className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-slate-900 mb-1">
-                  Request Consent
-                </h3>
-                <p className="text-sm text-slate-600">
-                  Request access to new patients
-                </p>
+                <h3 className="font-semibold text-slate-900 mb-1">Request Consent</h3>
+                <p className="text-sm text-slate-600">Request access to new patients</p>
               </div>
             </div>
           </a>
@@ -243,13 +201,9 @@ export default function DoctorDashboard() {
                   {stats.emergencyAccesses} Unresolved Emergency Access
                 </h3>
                 <p className="text-red-700 text-sm mb-3">
-                  You have emergency access requests that require patient
-                  acknowledgment
+                  You have emergency access requests that require patient acknowledgment
                 </p>
-                <a
-                  href="/doctor/emergency"
-                  className="text-red-600 font-medium text-sm hover:underline"
-                >
+                <a href="/doctor/emergency" className="text-red-600 font-medium text-sm hover:underline">
                   View Emergency Logs →
                 </a>
               </div>
@@ -270,10 +224,7 @@ export default function DoctorDashboard() {
                 <p className="text-amber-700 text-sm mb-3">
                   Waiting for patients to approve your access requests
                 </p>
-                <a
-                  href="/doctor/patients"
-                  className="text-amber-600 font-medium text-sm hover:underline"
-                >
+                <a href="/doctor/patients" className="text-amber-600 font-medium text-sm hover:underline">
                   View Requests →
                 </a>
               </div>
@@ -282,5 +233,5 @@ export default function DoctorDashboard() {
         )}
       </div>
     </div>
-  );
+  )
 }

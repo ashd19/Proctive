@@ -25,33 +25,34 @@ import XrayVisualizerPage from "./pages/XrayVisualizer/XrayVisualizerPage"
 import AddImage from "./pages/patient/AddImage"
 
 function App() {
-  const { checkConnection } = useWalletStore();
-  const [session, setSession] = useState<Session | null>(null);
+  const { checkConnection } = useWalletStore()
+  const [session, setSession] = useState<Session | null>(null)
 
   useEffect(() => {
-    checkConnection();
-  }, [checkConnection]);
+    checkConnection()
+  }, [checkConnection])
 
   useEffect(() => {
     supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-  }, []);
+      setSession(session)
+    })
+  }, [])
 
   const getRedirectPath = (session: Session) => {
-    const role = session.user.user_metadata?.role;
+  const role = session.user.user_metadata?.role
 
-    switch (role) {
-      case "doctor":
-        return "/doctor";
-      case "insurance":
-        return "/insurance";
-      case "admin":
-        return "/admin";
-      default:
-        return "/patient";
-    }
-  };
+  switch (role) {
+    case "doctor":
+      return "/doctor"
+    case "insurance":
+      return "/insurance"
+    case "admin":
+      return "/admin"
+    default:
+      return "/patient"
+  }
+}
+
 
   return (
     <Routes>
@@ -65,19 +66,25 @@ function App() {
       {/* Patient Routes */}
       <Route
         path="/patient"
-        element={<ProtectedRoute requiredRole="patient" />}
+        element={
+          <ProtectedRoute requiredRole="patient" />
+        }
       >
         <Route index element={<PatientDashboard />} />
         <Route path="records" element={<PatientRecords />} />
         <Route path="access" element={<PatientAccess />} />
         <Route path="claims" element={<PatientClaims />} />
         <Route path="audit" element={<PatientAuditLog />} />
-        <Route path="addpdf" element={<AddPdf />} />
-        <Route path="addimage" element={<AddImage />} />
+        <Route path="addPdf" element={<AddPdf />} />
       </Route>
 
       {/* Doctor Routes */}
-      <Route path="/doctor" element={<ProtectedRoute requiredRole="doctor" />}>
+      <Route
+        path="/doctor"
+        element={
+          <ProtectedRoute requiredRole="doctor" />
+        }
+      >
         <Route index element={<DoctorDashboard />} />
         <Route path="patients" element={<DoctorPatients />} />
         <Route path="emergency" element={<DoctorEmergency />} />
@@ -87,18 +94,25 @@ function App() {
       {/* Insurance Routes */}
       <Route
         path="/insurance"
-        element={<ProtectedRoute requiredRole="insurance" />}
+        element={
+          <ProtectedRoute requiredRole="insurance" />
+        }
       >
         <Route index element={<InsuranceDashboard />} />
         <Route path="claims" element={<InsuranceClaimsPage />} />
       </Route>
 
       {/* Admin Routes */}
-      <Route path="/admin" element={<ProtectedRoute requiredRole="admin" />}>
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute requiredRole="admin" />
+        }
+      >
         <Route index element={<AdminDashboard />} />
       </Route>
     </Routes>
-  );
+  )
 }
 
-export default App;
+export default App

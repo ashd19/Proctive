@@ -150,7 +150,7 @@ export default function AddPdf() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto  mt-8 space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-slate-800">Upload Medical Record</h1>
         <p className="text-slate-600 mt-2">Add a new PDF medical record to IPFS and blockchain</p>
