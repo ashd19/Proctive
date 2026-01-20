@@ -277,7 +277,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <Navbar isConnected={isConnected} isLoading={isLoading} handleConnect={handleConnect}/>
+      <Navbar otherThanLanding={false}/>
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 overflow-hidden">

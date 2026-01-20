@@ -4,21 +4,23 @@ import { Activity, CheckCircle, LogOut, User, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Link } from 'react-router-dom'
+import { useWalletStore } from '../store/walletStore'
 
-export default function Navbar({
-    isConnected,
-    handleConnect,
-    isLoading,
-    otherThanLanding
-}: {
-    isConnected?: boolean
-    handleConnect?: () => void;
-    isLoading?: boolean
-    otherThanLanding?: boolean
-}) {
+
+export default function Navbar({ otherThanLanding }: { otherThanLanding?: boolean }) {
 
     const [open, setOpen] = useState(false);
     const [session, setSession] = useState<Session | null>(null);
+    const { connect, isConnected, isLoading } = useWalletStore();
+
+    const handleConnect = async () => {
+        try {
+            await connect()
+            toast.success('Wallet connected successfully!')
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to connect wallet')
+        }
+    }
 
     useEffect(() => {
         // Get initial session
@@ -82,49 +84,45 @@ export default function Navbar({
 
                         {/* 2️⃣ SESSION EXISTS → EXISTING WALLET LOGIC */}
                         {session && (
-                            isConnected ? (
-                                otherThanLanding ? (
+                            <>
+                                {isConnected ? (
                                     <div className="relative flex items-center gap-3">
                                         <button className="btn-primary flex items-center gap-2">
                                             <CheckCircle className="w-4 h-4" />
                                             Connected
                                         </button>
-
-                                        <button
-                                            onClick={() => setOpen(!open)}
-                                            className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300"
-                                        >
-                                            <User className="w-5 h-5 text-gray-700" />
-                                        </button>
-
-                                        {open && (
-                                            <div className="absolute right-0 top-12 w-36 rounded-md bg-white shadow-lg border">
-                                                <button
-                                                    onClick={handleLogout}
-                                                    className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100"
-                                                >
-                                                    <LogOut className="w-4 h-4" />
-                                                    Logout
-                                                </button>
-                                            </div>
-                                        )}
                                     </div>
                                 ) : (
-                                    <button className="btn-primary flex items-center gap-2">
-                                        <CheckCircle className="w-4 h-4" />
-                                        Connected
+                                    <button
+                                        onClick={handleConnect}
+                                        disabled={isLoading}
+                                        className="btn-primary flex items-center gap-2"
+                                    >
+                                        <Wallet className="w-4 h-4" />
+                                        {isLoading ? "Connecting..." : "Connect Wallet"}
                                     </button>
-                                )
-                            ) : (
+                                )}
+                                <div>
                                 <button
-                                    onClick={handleConnect}
-                                    disabled={isLoading}
-                                    className="btn-primary flex items-center gap-2"
+                                    onClick={() => setOpen(!open)}
+                                    className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300"
                                 >
-                                    <Wallet className="w-4 h-4" />
-                                    {isLoading ? "Connecting..." : "Connect Wallet"}
+                                    <User className="w-5 h-5 text-gray-700" />
                                 </button>
-                            )
+
+                                {open && (
+                                    <div className="absolute right-20 top-3 w-36 rounded-md bg-white shadow-lg border">
+                                        <button
+                                            onClick={handleLogout}
+                                            className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                            Logout
+                                        </button>
+                                    </div>
+                                )}
+                                </div>
+                            </>
                         )}
                     </div>
 

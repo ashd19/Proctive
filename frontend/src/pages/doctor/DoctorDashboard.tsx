@@ -64,7 +64,7 @@ export default function DoctorDashboard() {
 
   return (
     <div className="p-8">
-      <Navbar isConnected={true} otherThanLanding={true}/>
+      <Navbar otherThanLanding={true}/>
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Doctor Dashboard</h1>

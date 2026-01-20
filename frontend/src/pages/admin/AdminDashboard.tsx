@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { useWalletStore } from '../../store/walletStore'
 import toast from 'react-hot-toast'
+import Navbar from '@/components/Navbar'
 
 const stats = [
   {
@@ -237,7 +238,9 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
+    <Navbar/>
+    <div className="space-y-6 mt-20">
       {/* Welcome Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -575,5 +578,6 @@ export default function AdminDashboard() {
         )}
       </AnimatePresence>
     </div>
+    </>
   )
 }
