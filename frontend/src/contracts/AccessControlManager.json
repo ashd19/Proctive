@@ -607,6 +607,19 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "VitalChainCore",
+      "outputs": [
+        {
+          "internalType": "contract VitalChainCore",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "address",
@@ -759,19 +772,6 @@
       "name": "revokeAccess",
       "outputs": [],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "vitalChainCore",
-      "outputs": [
-        {
-          "internalType": "contract VitalChainCore",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     }
   ]

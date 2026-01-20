@@ -1,70 +1,67 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import Layout from "./components/Layout";
-import ProtectedRoute from "./components/ProtectedRoute";
-import PatientDashboard from "./pages/patient/PatientDashboard";
-import PatientRecords from "./pages/patient/PatientRecords";
-import PatientAccess from "./pages/patient/PatientAccess";
-import PatientClaims from "./pages/patient/PatientClaims";
-import PatientAuditLog from "./pages/patient/PatientAuditLog";
-import DoctorDashboard from "./pages/doctor/DoctorDashboard";
-import DoctorPatients from "./pages/doctor/DoctorPatients";
-import DoctorEmergency from "./pages/doctor/DoctorEmergency";
-import InsuranceDashboard from "./pages/insurance/InsuranceDashboard";
-import InsuranceClaimsPage from "./pages/insurance/InsuranceClaimsPage";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AddPdf from "./pages/addPdf/AddPdf";
-import AddImage from "./pages/patient/AddImage";
-import ConvertToJson from "./pages/patient/ConvertToJson";
-import { useWalletStore } from "./store/walletStore";
-import { Session } from "@supabase/supabase-js";
-import { supabase } from "./lib/supabaseClient";
-import Auth from "./pages/Auth/Auth";
-import LandingPage from "./pages/LandingPage";
-import HospitalsMap from "./components/HospitalsMap";
+import { Routes, Route, Navigate } from "react-router-dom"
+import { useEffect, useState } from "react"
+import Layout from "./components/Layout"
+import ProtectedRoute from "./components/ProtectedRoute"
+import PatientDashboard from "./pages/patient/PatientDashboard"
+import PatientRecords from "./pages/patient/PatientRecords"
+import PatientAccess from "./pages/patient/PatientAccess"
+import PatientClaims from "./pages/patient/PatientClaims"
+import PatientAuditLog from "./pages/patient/PatientAuditLog"
+import DoctorDashboard from "./pages/doctor/DoctorDashboard"
+import DoctorPatients from "./pages/doctor/DoctorPatients"
+import DoctorEmergency from "./pages/doctor/DoctorEmergency"
+import InsuranceDashboard from "./pages/insurance/InsuranceDashboard"
+import InsuranceClaimsPage from "./pages/insurance/InsuranceClaimsPage"
+import AdminDashboard from "./pages/admin/AdminDashboard"
+import AddPdf from "./pages/addPdf/AddPdf"
+import { useWalletStore } from "./store/walletStore"
+import { Session } from "@supabase/supabase-js"
+import { supabase } from "./lib/supabaseClient"
+import Auth from "./pages/Auth/Auth"
+import LandingPage from "./pages/LandingPage"
+import HospitalsMap from "./components/HospitalsMap"
 
 function App() {
-  const { checkConnection } = useWalletStore();
-  const [session, setSession] = useState<Session | null>(null);
+  const { checkConnection } = useWalletStore()
+  const [session, setSession] = useState<Session | null>(null)
 
   useEffect(() => {
-    checkConnection();
-  }, [checkConnection]);
+    checkConnection()
+  }, [checkConnection])
 
   useEffect(() => {
     supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-  }, []);
+      setSession(session)
+    })
+  }, [])
 
   const getRedirectPath = (session: Session) => {
-    const role = session.user.user_metadata?.role;
+  const role = session.user.user_metadata?.role
 
-    switch (role) {
-      case "doctor":
-        return "/doctor";
-      case "insurance":
-        return "/insurance";
-      case "admin":
-        return "/admin";
-      default:
-        return "/patient";
-    }
-  };
+  switch (role) {
+    case "doctor":
+      return "/doctor"
+    case "insurance":
+      return "/insurance"
+    case "admin":
+      return "/admin"
+    default:
+      return "/patient"
+  }
+}
+
 
   return (
     <Routes>
       {/* Public / Auth */}
       <Route path="/" element={<LandingPage />} />
-      <Route path="/auth" element={<Auth />} />
+      <Route path="/auth" element={<Auth/>}/>
 
       {/* Patient Routes */}
       <Route
         path="/patient"
         element={
-          <Layout role="patient">
-            <ProtectedRoute requiredRole="patient" />
-          </Layout>
+          <ProtectedRoute requiredRole="patient" />
         }
       >
         <Route index element={<PatientDashboard />} />
@@ -72,18 +69,14 @@ function App() {
         <Route path="access" element={<PatientAccess />} />
         <Route path="claims" element={<PatientClaims />} />
         <Route path="audit" element={<PatientAuditLog />} />
-        <Route path="addpdf" element={<AddPdf />} />
-        <Route path="addimage" element={<AddImage />} />
-        <Route path="convert" element={<ConvertToJson />} />
+        <Route path="addPdf" element={<AddPdf />} />
       </Route>
 
       {/* Doctor Routes */}
       <Route
         path="/doctor"
         element={
-          <Layout role="doctor">
-            <ProtectedRoute requiredRole="doctor" />
-          </Layout>
+          <ProtectedRoute requiredRole="doctor" />
         }
       >
         <Route index element={<DoctorDashboard />} />
@@ -96,9 +89,7 @@ function App() {
       <Route
         path="/insurance"
         element={
-          <Layout role="insurance">
-            <ProtectedRoute requiredRole="insurance" />
-          </Layout>
+          <ProtectedRoute requiredRole="insurance" />
         }
       >
         <Route index element={<InsuranceDashboard />} />
@@ -109,15 +100,13 @@ function App() {
       <Route
         path="/admin"
         element={
-          <Layout role="admin">
-            <ProtectedRoute requiredRole="admin" />
-          </Layout>
+          <ProtectedRoute requiredRole="admin" />
         }
       >
         <Route index element={<AdminDashboard />} />
       </Route>
     </Routes>
-  );
+  )
 }
 
-export default App;
+export default App

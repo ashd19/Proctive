@@ -28,7 +28,6 @@ import { toast } from 'react-hot-toast'
 
 interface LayoutProps {
   role: UserRole
-  children?: React.ReactNode
 }
 
 const menuItems = {
@@ -74,7 +73,7 @@ const roleColors = {
   lab: 'from-pink-500 to-pink-600',
 }
 
-export default function Layout({ role, children }: LayoutProps) {
+export default function Layout({ role }: LayoutProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const { address, disconnect } = useWalletStore()
@@ -325,7 +324,7 @@ export default function Layout({ role, children }: LayoutProps) {
 
         {/* Page Content */}
         <main className="p-6">
-          {children || <Outlet />}
+          <Outlet />
         </main>
       </div>
     </div>
