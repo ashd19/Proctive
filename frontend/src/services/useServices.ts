@@ -55,7 +55,7 @@ export function useServices() {
           patientRecords: new PatientRecordsService(contracts.patientRecords, address),
           accessControl: new AccessControlService(contracts.accessControl, address),
           auditLog: new AuditLogService(contracts.auditLog, address),
-          emergencyAccess: new EmergencyAccessService(contracts.emergencyAccess, address),
+          emergencyAccess: new EmergencyAccessService(contracts.emergencyAccess, contracts.auditLog, address),
           insuranceClaims: new InsuranceClaimsService(contracts.insuranceClaims, address),
           ipfs: ipfsService
         })

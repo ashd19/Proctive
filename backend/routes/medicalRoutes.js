@@ -39,9 +39,14 @@ router.post("/convert", upload.single("file"), async (req, res) => {
         );
         pdfParser.on("pdfParser_dataReady", (pdfData) => {
           const extractedText = pdfData.Pages.map((page) =>
-            page.Texts.map((text) =>
-              decodeURIComponent(text.R.map((r) => r.T).join("")),
-            ).join(" "),
+            page.Texts.map((text) => {
+              try {
+                return decodeURIComponent(text.R.map((r) => r.T).join(""));
+              } catch (e) {
+                // If URI is malformed, return raw text
+                return text.R.map((r) => r.T).join("");
+              }
+            }).join(" "),
           ).join("\n");
 
           resolve({
