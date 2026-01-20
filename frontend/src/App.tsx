@@ -15,6 +15,7 @@ import InsuranceClaimsPage from "./pages/insurance/InsuranceClaimsPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AddPdf from "./pages/addPdf/AddPdf";
 import AddImage from "./pages/patient/AddImage";
+import ConvertToJson from "./pages/patient/ConvertToJson";
 import { useWalletStore } from "./store/walletStore";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "./lib/supabaseClient";
@@ -60,7 +61,11 @@ function App() {
       {/* Patient Routes */}
       <Route
         path="/patient"
-        element={<ProtectedRoute requiredRole="patient" />}
+        element={
+          <Layout role="patient">
+            <ProtectedRoute requiredRole="patient" />
+          </Layout>
+        }
       >
         <Route index element={<PatientDashboard />} />
         <Route path="records" element={<PatientRecords />} />
@@ -69,10 +74,18 @@ function App() {
         <Route path="audit" element={<PatientAuditLog />} />
         <Route path="addpdf" element={<AddPdf />} />
         <Route path="addimage" element={<AddImage />} />
+        <Route path="convert" element={<ConvertToJson />} />
       </Route>
 
       {/* Doctor Routes */}
-      <Route path="/doctor" element={<ProtectedRoute requiredRole="doctor" />}>
+      <Route
+        path="/doctor"
+        element={
+          <Layout role="doctor">
+            <ProtectedRoute requiredRole="doctor" />
+          </Layout>
+        }
+      >
         <Route index element={<DoctorDashboard />} />
         <Route path="patients" element={<DoctorPatients />} />
         <Route path="emergency" element={<DoctorEmergency />} />
@@ -82,14 +95,25 @@ function App() {
       {/* Insurance Routes */}
       <Route
         path="/insurance"
-        element={<ProtectedRoute requiredRole="insurance" />}
+        element={
+          <Layout role="insurance">
+            <ProtectedRoute requiredRole="insurance" />
+          </Layout>
+        }
       >
         <Route index element={<InsuranceDashboard />} />
         <Route path="claims" element={<InsuranceClaimsPage />} />
       </Route>
 
       {/* Admin Routes */}
-      <Route path="/admin" element={<ProtectedRoute requiredRole="admin" />}>
+      <Route
+        path="/admin"
+        element={
+          <Layout role="admin">
+            <ProtectedRoute requiredRole="admin" />
+          </Layout>
+        }
+      >
         <Route index element={<AdminDashboard />} />
       </Route>
     </Routes>

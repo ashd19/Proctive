@@ -12,11 +12,10 @@ import {
 import { Link } from "react-router-dom";
 import { useServices } from "../../services/useServices";
 import { useWalletStore } from "../../store/walletStore";
-import Navbar from "@/components/Navbar";
 
 export default function PatientDashboard() {
   const { services, loading: servicesLoading } = useServices();
-  const { address, disconnect } = useWalletStore();
+  const { address } = useWalletStore();
 
   const [stats, setStats] = useState({
     recordCount: 0,
@@ -87,11 +86,6 @@ export default function PatientDashboard() {
 
   return (
     <div className="p-8">
-      <Navbar
-        isConnected={true}
-        handleDisconnect={disconnect}
-        otherThanLanding={true}
-      />
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">

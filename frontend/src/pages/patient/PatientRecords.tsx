@@ -81,7 +81,8 @@ export default function PatientRecords() {
         setRecords(patientRecords);
       } catch (error: any) {
         console.error("Error loading records:", error);
-        toast.error(error.message || "Failed to load medical records");
+        // Suppress toast error since service may still be initializing
+        // toast.error(error.message || "Failed to load medical records");
       } finally {
         setLoading(false);
       }
@@ -159,8 +160,11 @@ export default function PatientRecords() {
           address,
           record.id,
           1,
-          "local",
-          "Patient download",
+          "Patient",
+          "patient",
+          record.metadata.hospitalName || "Direct Upload",
+          "browser",
+          navigator.userAgent.substring(0, 50),
         );
       }
     } catch (error: any) {
@@ -297,6 +301,13 @@ export default function PatientRecords() {
             >
               <Image className="w-5 h-5" />
               Upload Image
+            </Link>
+            <Link
+              to="/patient/convert"
+              className="btn-primary flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+            >
+              <FileText className="w-5 h-5" />
+              Upload/Convert JSON
             </Link>
             <button
               onClick={() => setShowUploadModal(true)}

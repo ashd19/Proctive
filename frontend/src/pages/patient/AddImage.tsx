@@ -95,13 +95,29 @@ export default function AddImage() {
       return;
     }
 
-    if (!services || !services.ipfs) {
+    if (!services || !services.ipfs || !services.auditLog) {
       toast.error("Services are still loading, please wait...");
       return;
     }
 
     setUploading(true);
     try {
+      // Step 0: Request MetaMask signature
+      toast.loading("Please sign the transaction in MetaMask...", {
+        id: "upload",
+      });
+      const message = `Upload Image to IPFS\nTitle: ${formData.title}\nType: ${
+        formData.recordType
+      }\nTimestamp: ${new Date().toISOString()}`;
+      const provider = (window as any).ethereum;
+      if (!provider) {
+        throw new Error("MetaMask not found");
+      }
+      const signature = await provider.request({
+        method: "personal_sign",
+        params: [message, address],
+      });
+
       // Step 1: Upload image to IPFS
       toast.loading("Uploading image to IPFS...", { id: "upload" });
       const imageCid = await services.ipfs.uploadToIPFS(file);
@@ -123,6 +139,8 @@ export default function AddImage() {
           patientAddress: address,
           imageCid,
           imageUrl: `https://gateway.pinata.cloud/ipfs/${imageCid}`,
+          signature: signature,
+          signedMessage: message,
         },
         imageData: {
           cid: imageCid,
@@ -141,8 +159,21 @@ export default function AddImage() {
       const hash = await services.ipfs.uploadJSON(imageMetadata, jsonFileName);
       setIpfsHash(hash);
 
-      // Step 3: Success
-      toast.success(`Image uploaded to IPFS successfully! Hash: ${hash}`, {
+      // Step 4: Log to audit trail
+      toast.loading("Recording in audit log...", { id: "upload" });
+      await services.auditLog.logAccess(
+        address,
+        0,
+        3,
+        "Patient",
+        "patient",
+        "Direct Upload",
+        "browser",
+        navigator.userAgent.substring(0, 50),
+      );
+
+      // Step 5: Success
+      toast.success(`✓ Signed & uploaded to IPFS! Hash: ${hash}`, {
         id: "upload",
         duration: 5000,
       });
