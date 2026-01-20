@@ -391,18 +391,71 @@ function SessionCard({
         )}
       </button>
 
-      {showRecords && records.length > 0 && (
-        <div className="mt-4 space-y-2">
-          {records.map((record) => (
-            <div key={record.id} className="bg-slate-100 rounded-lg p-3">
-              <h5 className="font-medium text-slate-900">
-                {record.metadata.title}
-              </h5>
-              <p className="text-sm text-slate-600">
-                {record.metadata.description}
-              </p>
+      {showRecords && (
+        <div className="mt-4">
+          {records.length > 0 ? (
+            <div className="space-y-3">
+              <div className="text-sm font-medium text-slate-700 mb-2">
+                📋 Patient Records ({records.length})
+              </div>
+              {records.map((record, idx) => (
+                <motion.div
+                  key={record.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-start gap-2">
+                      <FileText className="w-5 h-5 text-blue-600 mt-0.5" />
+                      <div className="flex-1">
+                        <h5 className="font-semibold text-slate-900 mb-1">
+                          {record.metadata?.title || `Medical Record #${record.id}`}
+                        </h5>
+                        <p className="text-sm text-slate-600 mb-2">
+                          {record.metadata?.description || 'No description available'}
+                        </p>
+                        <div className="flex flex-wrap gap-2 text-xs">
+                          {record.metadata?.hospitalName && (
+                            <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded">
+                              🏥 {record.metadata.hospitalName}
+                            </span>
+                          )}
+                          {record.metadata?.doctorName && (
+                            <span className="px-2 py-1 bg-green-50 text-green-700 rounded">
+                              👨‍⚕️ {record.metadata.doctorName}
+                            </span>
+                          )}
+                          {record.metadata?.tags && record.metadata.tags.length > 0 && (
+                            record.metadata.tags.slice(0, 3).map((tag, i) => (
+                              <span key={i} className="px-2 py-1 bg-slate-100 text-slate-600 rounded">
+                                #{tag}
+                              </span>
+                            ))
+                          )}
+                        </div>
+                        {record.createdAt && (
+                          <p className="text-xs text-slate-500 mt-2">
+                            Created: {new Date(record.createdAt * 1000).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                      ID: {record.id}
+                    </span>
+                  </div>
+                </motion.div>
+              ))}
             </div>
-          ))}
+          ) : (
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 text-center">
+              <FileText className="w-12 h-12 text-slate-300 mx-auto mb-2" />
+              <p className="text-slate-600 text-sm">No medical records found for this patient</p>
+              <p className="text-slate-500 text-xs mt-1">Records may not have been created yet</p>
+            </div>
+          )}
         </div>
       )}
     </motion.div>
