@@ -46,13 +46,39 @@ class IPFSService {
   encryptKeyForUser(key: string, publicKey: string): string {
     // In production, use actual RSA encryption with user's public key
     // For demo, we use a deterministic encryption based on publicKey
-    return CryptoJS.AES.encrypt(key, publicKey).toString();
+    // Normalize address to lowercase to avoid checksum issues
+    const normalizedKey = publicKey.toLowerCase();
+    return CryptoJS.AES.encrypt(key, normalizedKey).toString();
   }
 
   // Decrypt the encryption key with user's private key
   decryptKeyForUser(encryptedKey: string, privateKey: string): string {
-    const bytes = CryptoJS.AES.decrypt(encryptedKey, privateKey);
-    return bytes.toString(CryptoJS.enc.Utf8);
+    try {
+      // Normalize address to lowercase to match encryption
+      const normalizedKey = privateKey.toLowerCase();
+      const bytes = CryptoJS.AES.decrypt(encryptedKey, normalizedKey);
+      const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+
+      if (!decrypted) {
+        throw new Error("Decryption failed - wrong key or corrupted data");
+      }
+
+      return decrypted;
+    } catch (error: any) {
+      console.error("❌ Key decryption failed:", error);
+      console.log("Encrypted key length:", encryptedKey?.length);
+      console.log(
+        "Private key (first 10 chars):",
+        privateKey?.substring(0, 10),
+      );
+      console.log(
+        "Normalized key:",
+        privateKey?.toLowerCase().substring(0, 10),
+      );
+      throw new Error(
+        "Failed to decrypt encryption key - access denied or corrupted data",
+      );
+    }
   }
 
   // Upload data to IPFS using Pinata

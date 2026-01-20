@@ -12,15 +12,7 @@ import {
 import { useServices } from "../../services/useServices";
 import { toast } from "react-hot-toast";
 import { useWalletStore } from "../../store/walletStore";
-
-type PdfMetadata = {
-  title: string;
-  recordType: string;
-  description: string;
-  fileName: string;
-  fileSize: number;
-  uploadedAt: string;
-};
+import ipfsService from "../../services/ipfs";
 
 export default function AddPdf() {
   const { address, isConnected } = useWalletStore();
@@ -104,30 +96,24 @@ export default function AddPdf() {
       if (!provider) {
         throw new Error("MetaMask not found");
       }
-      const signature = await provider.request({
+      await provider.request({
         method: "personal_sign",
         params: [message, address],
       });
 
-      // Step 2: Convert PDF to JSON using backend
-      toast.loading("Converting PDF to structured data...", { id: "upload" });
-      const formData2 = new FormData();
-      formData2.append("file", file);
-
-      const response = await fetch("http://localhost:5000/api/pdf/convert", {
-        method: "POST",
-        body: formData2,
+      // Step 2: Upload PDF file directly to IPFS (encrypted)
+      toast.loading("Encrypting and uploading PDF to IPFS...", {
+        id: "upload",
       });
+      const fileUploadResult = await (ipfsService as any).uploadEncryptedFile(
+        file,
+        address,
+      );
 
-      if (!response.ok) {
-        throw new Error("PDF conversion failed");
-      }
+      console.log("PDF uploaded to IPFS:", fileUploadResult);
 
-      const pdfData = await response.json();
-      console.log("PDF converted to JSON:", pdfData);
-
-      // Step 3: Create blockchain record (this handles IPFS upload internally)
-      toast.loading("Creating blockchain record with IPFS...", {
+      // Step 3: Create blockchain record with file metadata
+      toast.loading("Creating blockchain record...", {
         id: "upload",
       });
       const recordData = {
@@ -137,11 +123,18 @@ export default function AddPdf() {
         description: formData.description || "PDF Medical Record",
         hospitalName: "Patient Upload",
         doctorName: "Self",
-        diagnosis: pdfData.diagnosis,
-        treatment: pdfData.treatment,
-        medications: pdfData.medications,
-        notes: pdfData.notes || JSON.stringify(pdfData, null, 2),
+        notes: `PDF File: ${fileUploadResult.fileName} (${(
+          fileUploadResult.fileSize /
+          1024 /
+          1024
+        ).toFixed(2)} MB)`,
         tags: [formData.recordType, "PDF", "Patient Upload"],
+        // Store file metadata
+        fileData: true,
+        fileName: fileUploadResult.fileName,
+        fileSize: fileUploadResult.fileSize,
+        mimeType: fileUploadResult.mimeType,
+        fileUrl: `https://gateway.pinata.cloud/ipfs/${fileUploadResult.ipfsHash}`,
       };
 
       const recordId = await services.patientRecords.createRecord(
@@ -167,7 +160,7 @@ export default function AddPdf() {
       }
 
       // Step 5: Success
-      toast.success(`✓ Record created on blockchain! ID: ${recordId}`, {
+      toast.success(`✓ PDF uploaded to IPFS! Record ID: ${recordId}`, {
         id: "upload",
         duration: 3000,
       });
@@ -181,6 +174,7 @@ export default function AddPdf() {
       }, 2000);
     } catch (error) {
       console.error("Upload error:", error);
+      toast.error((error as Error).message || "Upload failed");
       toast.dismiss("upload");
     } finally {
       setUploading(false);

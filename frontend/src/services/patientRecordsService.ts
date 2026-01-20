@@ -19,6 +19,12 @@ export interface MedicalRecordData {
   };
   notes?: string;
   tags: string[];
+  // File metadata fields
+  fileData?: boolean;
+  fileName?: string;
+  fileSize?: number;
+  mimeType?: string;
+  fileUrl?: string;
 }
 
 export interface MedicalRecord {
@@ -198,7 +204,17 @@ export class PatientRecordsService {
       console.log("📥 Retrieving record data from IPFS...");
       console.log("Patient:", record.patient);
       console.log("IPFS Hash:", record.ipfsHash);
+      console.log("Encrypted Key (full):", record.encryptedKey);
+      console.log("Encrypted Key length:", record.encryptedKey?.length);
       console.log("Current user:", this.userAddress);
+      console.log("Decryption key:", decryptionKey);
+
+      // Validate encrypted key exists
+      if (!record.encryptedKey || record.encryptedKey.length === 0) {
+        throw new Error(
+          "No encryption key found in record - record may be corrupted",
+        );
+      }
 
       const data = await ipfsService.retrieveRecord(
         record.ipfsHash,
@@ -210,9 +226,10 @@ export class PatientRecordsService {
         throw new Error("Failed to decrypt record data");
       }
 
+      console.log("✅ Record data successfully retrieved and decrypted");
       return data;
     } catch (error: any) {
-      console.error("Error retrieving record data:", error);
+      console.error("❌ Error retrieving record data:", error);
       throw new Error(error.message || "Failed to decrypt record data");
     }
   }
