@@ -265,7 +265,7 @@ export default function TrustVisualizerPage() {
            {/* Action Panel */}
            <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-lg">
               <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <Zap size={18} className="text-amber-500" />
+                {/* <className="text-amber-500" /> */}
                 Actions
               </h3>
               
