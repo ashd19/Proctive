@@ -188,7 +188,7 @@ export default function HospitalsMap() {
       // All servers failed
       console.error("All Overpass API servers failed.");
       if (hospitals.length === 0) {
-        setError("Unable to load nearby hospitals at this time. Please try again later.");
+        setError("");
       }
     }
     

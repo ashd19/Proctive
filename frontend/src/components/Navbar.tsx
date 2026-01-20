@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabaseClient";
 import { Session } from "@supabase/supabase-js";
-import { Activity, CheckCircle, LogOut, User, Wallet } from "lucide-react";
+import { Activity, CheckCircle, LogOut, User, Wallet, Brain, ShieldCheck, MapPin, ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Link } from 'react-router-dom'
@@ -67,6 +67,50 @@ export default function Navbar({ otherThanLanding }: { otherThanLanding?: boolea
                         <a href={`${otherThanLanding ? "/" : "#features"}`} className="nav-link">Features</a>
                         <a href={`${otherThanLanding ? "/" : "#how-it-works"}`} className="nav-link">How It Works</a>
                         <a href={`${otherThanLanding ? "/" : "#portals"}`} className="nav-link">Portals</a>
+                        
+                        {/* Smart Tools Dropdown */}
+                        <div className="relative group">
+                            <button className="flex items-center gap-1 nav-link group-hover:text-primary-600 transition-colors">
+                                <span>Smart Tools</span>
+                                <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
+                            </button>
+                            
+                            <div className="absolute top-full right-0 mt-2 w-56 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 ease-out">
+                                <div className="p-2 bg-white rounded-xl shadow-xl border border-slate-100 ring-1 ring-black/5">
+                                    <div className="space-y-1">
+                                        <Link to="/xray-demo" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors group/item">
+                                            <div className="p-2 rounded-md bg-blue-50 text-blue-600 group-hover/item:bg-blue-100 transition-colors">
+                                                <Brain className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-medium text-slate-700">AI X-Ray Analysis</div>
+                                                <div className="text-xs text-slate-500">Detect anomalies instantly</div>
+                                            </div>
+                                        </Link>
+                                        
+                                        <Link to="/trust-demo" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors group/item">
+                                            <div className="p-2 rounded-md bg-emerald-50 text-emerald-600 group-hover/item:bg-emerald-100 transition-colors">
+                                                <ShieldCheck className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-medium text-slate-700">Trust Visualizer</div>
+                                                <div className="text-xs text-slate-500">Blockchain verification</div>
+                                            </div>
+                                        </Link>
+
+                                        <Link to="/hospitals" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors group/item">
+                                            <div className="p-2 rounded-md bg-red-50 text-red-600 group-hover/item:bg-red-100 transition-colors">
+                                                <MapPin className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-medium text-slate-700">Nearby Hospitals</div>
+                                                <div className="text-xs text-slate-500">Find care near you</div>
+                                            </div>
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-4">
