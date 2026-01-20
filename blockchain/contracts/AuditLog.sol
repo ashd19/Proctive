@@ -11,7 +11,7 @@ import "./AccessControlManager.sol";
  * @dev Tamper-evident audit logging for all medical record accesses
  */
 contract AuditLog is ReentrancyGuard {
-    VitalChainCore public VitalChainCore;
+    VitalChainCore public vitalChainCore;
     PatientRecords public patientRecords;
     AccessControlManager public accessControl;
 
@@ -83,11 +83,11 @@ contract AuditLog is ReentrancyGuard {
     );
 
     constructor(
-        address _VitalChainCoreAddress,
+        address _vitalChainCoreAddress,
         address _patientRecordsAddress,
         address _accessControlAddress
     ) {
-        VitalChainCore = VitalChainCore(_VitalChainCoreAddress);
+        vitalChainCore = VitalChainCore(_vitalChainCoreAddress);
         patientRecords = PatientRecords(_patientRecordsAddress);
         accessControl = AccessControlManager(_accessControlAddress);
     }
@@ -105,7 +105,7 @@ contract AuditLog is ReentrancyGuard {
         string memory _ipAddressHash,
         string memory _deviceInfoHash
     ) external nonReentrant returns (uint256) {
-        require(VitalChainCore.isRegisteredPatient(_patient), "Patient not registered");
+        require(vitalChainCore.isRegisteredPatient(_patient), "Patient not registered");
 
         logCounter++;
 
@@ -147,8 +147,8 @@ contract AuditLog is ReentrancyGuard {
         string memory _ipAddressHash,
         string memory _deviceInfoHash
     ) external nonReentrant returns (uint256) {
-        require(VitalChainCore.hasRole(VitalChainCore.EMERGENCY_ROLE(), msg.sender), "No emergency access rights");
-        require(VitalChainCore.isRegisteredPatient(_patient), "Patient not registered");
+        require(vitalChainCore.hasRole(vitalChainCore.EMERGENCY_ROLE(), msg.sender), "No emergency access rights");
+        require(vitalChainCore.isRegisteredPatient(_patient), "Patient not registered");
 
         logCounter++;
 
@@ -192,8 +192,8 @@ contract AuditLog is ReentrancyGuard {
     function flagEmergencyAccess(uint256 _logId) external {
         require(
             logs[_logId].patient == msg.sender ||
-            VitalChainCore.hasRole(VitalChainCore.DEFAULT_ADMIN_ROLE(), msg.sender) ||
-            VitalChainCore.hasRole(VitalChainCore.HOSPITAL_ROLE(), msg.sender),
+            vitalChainCore.hasRole(vitalChainCore.DEFAULT_ADMIN_ROLE(), msg.sender) ||
+            vitalChainCore.hasRole(vitalChainCore.HOSPITAL_ROLE(), msg.sender),
             "Not authorized to flag"
         );
         require(logs[_logId].isEmergencyAccess, "Not an emergency access log");

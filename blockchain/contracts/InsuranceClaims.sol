@@ -12,7 +12,7 @@ import "./AuditLog.sol";
  * @dev Automates insurance claim processing through smart contracts
  */
 contract InsuranceClaims is ReentrancyGuard {
-    VitalChainCore public VitalChainCore;
+    VitalChainCore public vitalChainCore;
     PatientRecords public patientRecords;
     AccessControlManager public accessControl;
     AuditLog public auditLog;
@@ -162,13 +162,13 @@ contract InsuranceClaims is ReentrancyGuard {
     );
 
     modifier onlyRegisteredPatient() {
-        require(VitalChainCore.isRegisteredPatient(msg.sender), "Not a registered patient");
+        require(vitalChainCore.isRegisteredPatient(msg.sender), "Not a registered patient");
         _;
     }
 
     modifier onlyInsuranceProvider() {
         require(
-            VitalChainCore.hasRole(VitalChainCore.INSURANCE_ROLE(), msg.sender),
+            vitalChainCore.hasRole(vitalChainCore.INSURANCE_ROLE(), msg.sender),
             "Not an insurance provider"
         );
         _;
@@ -184,12 +184,12 @@ contract InsuranceClaims is ReentrancyGuard {
     }
 
     constructor(
-        address _VitalChainCoreAddress,
+        address _vitalChainCoreAddress,
         address _patientRecordsAddress,
         address _accessControlAddress,
         address _auditLogAddress
     ) {
-        VitalChainCore = VitalChainCore(_VitalChainCoreAddress);
+        vitalChainCore = VitalChainCore(_vitalChainCoreAddress);
         patientRecords = PatientRecords(_patientRecordsAddress);
         accessControl = AccessControlManager(_accessControlAddress);
         auditLog = AuditLog(_auditLogAddress);
@@ -210,7 +210,7 @@ contract InsuranceClaims is ReentrancyGuard {
         string[] memory _coveredProcedures
     ) external onlyInsuranceProvider nonReentrant {
         require(bytes(policies[_policyNumber].policyNumber).length == 0, "Policy already exists");
-        require(VitalChainCore.isRegisteredPatient(_patient), "Patient not registered");
+        require(vitalChainCore.isRegisteredPatient(_patient), "Patient not registered");
 
         policies[_policyNumber] = InsurancePolicy({
             policyNumber: _policyNumber,
@@ -314,8 +314,8 @@ contract InsuranceClaims is ReentrancyGuard {
         InsuranceClaim storage claim = claims[_claimId];
         require(
             claim.patient == msg.sender ||
-            VitalChainCore.hasRole(VitalChainCore.DOCTOR_ROLE(), msg.sender) ||
-            VitalChainCore.hasRole(VitalChainCore.HOSPITAL_ROLE(), msg.sender),
+            vitalChainCore.hasRole(vitalChainCore.DOCTOR_ROLE(), msg.sender) ||
+            vitalChainCore.hasRole(vitalChainCore.HOSPITAL_ROLE(), msg.sender),
             "Not authorized"
         );
 
@@ -476,7 +476,7 @@ contract InsuranceClaims is ReentrancyGuard {
         
         require(
             claim.insuranceProvider == msg.sender ||
-            VitalChainCore.hasRole(VitalChainCore.HOSPITAL_ROLE(), msg.sender),
+            vitalChainCore.hasRole(vitalChainCore.HOSPITAL_ROLE(), msg.sender),
             "Not authorized to verify"
         );
 
