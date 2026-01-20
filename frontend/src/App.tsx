@@ -19,7 +19,9 @@ import { Session } from "@supabase/supabase-js"
 import { supabase } from "./lib/supabaseClient"
 import Auth from "./pages/Auth/Auth"
 import LandingPage from "./pages/LandingPage"
-import HospitalsMap from "./components/HospitalsMap"
+import HospitalsPage from "./pages/HospitalsPage"
+import TrustVisualizerPage from "./pages/TrustVisualizer/TrustVisualizerPage"
+import XrayVisualizerPage from "./pages/XrayVisualizer/XrayVisualizerPage"
 
 function App() {
   const { checkConnection } = useWalletStore()
@@ -56,6 +58,9 @@ function App() {
       {/* Public / Auth */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/auth" element={<Auth/>}/>
+      <Route path="/hospitals" element={<HospitalsPage/>}/>
+      <Route path="/trust-demo" element={<TrustVisualizerPage/>}/>
+      <Route path="/xray-demo" element={<XrayVisualizerPage/>}/>
 
       {/* Patient Routes */}
       <Route
@@ -82,7 +87,7 @@ function App() {
         <Route index element={<DoctorDashboard />} />
         <Route path="patients" element={<DoctorPatients />} />
         <Route path="emergency" element={<DoctorEmergency />} />
-        <Route path="maps" element={<HospitalsMap />} />
+        {/* <Route path="maps" element={<HospitalsPage />} /> */}
       </Route>
 
       {/* Insurance Routes */}

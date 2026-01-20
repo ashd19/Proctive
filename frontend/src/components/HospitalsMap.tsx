@@ -100,63 +100,99 @@ export default function HospitalsMap() {
     }
   }, []);
 
+  // List of Overpass API instances to try in order
+  const OVERPASS_SERVERS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://interpreter.lazylibrarian.org/api/interpreter", 
+    "https://overpass.kumi.systems/api/interpreter"
+  ];
+
   const fetchHospitals = async (lat: number, lng: number) => {
     setIsLoadingHospitals(true);
     setError(null);
-    try {
-      // Overpass API Query for hospitals within 5km (5000m)
-      const query = `
-        [out:json];
-        (
-          node["amenity"="hospital"](around:5000, ${lat}, ${lng});
-          way["amenity"="hospital"](around:5000, ${lat}, ${lng});
-          relation["amenity"="hospital"](around:5000, ${lat}, ${lng});
-        );
-        out center;
-      `;
-      
-      const response = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
-      if (!response.ok) throw new Error("Failed to fetch data from Overpass API");
-      
-      const data = await response.json();
-      const elements = data.elements;
+    
+    // Overpass API Query for hospitals within 5km (5000m)
+    const query = `
+      [out:json];
+      (
+        node["amenity"="hospital"](around:5000, ${lat}, ${lng});
+        way["amenity"="hospital"](around:5000, ${lat}, ${lng});
+        relation["amenity"="hospital"](around:5000, ${lat}, ${lng});
+      );
+      out center;
+    `;
+    
+    let isSuccess = false;
 
-      const formattedHospitals: Hospital[] = elements.map((item: any) => {
-        const lat = item.lat || item.center?.lat;
-        const lng = item.lon || item.center?.lon;
-        
-        // Simulating some data not present in OSM for UI consistency
-        const rating = (Math.random() * (5.0 - 3.5) + 3.5).toFixed(1); 
-        
-        return {
-            place_id: item.id.toString(),
-            name: item.tags.name || "Unknown Hospital",
-            rating: parseFloat(rating),
-            vicinity: [
-              item.tags['addr:full'],
-              [
-                item.tags['addr:housenumber'],
-                item.tags['addr:street'],
-                item.tags['addr:suburb'] || item.tags['addr:neighbourhood'],
-                item.tags['addr:city']
-              ].filter(Boolean).join(', ')
-            ].find(Boolean) || "Address details unavailable",
-            lat: lat,
-            lng: lng,
-            isOpen: true // OSM data rarely has real-time opening status
-        };
-      }).filter((h: Hospital) => h.lat && h.lng && h.name !== "Unknown Hospital"); // Filter out invalid entries
+    // Try each server until one works
+    for (const server of OVERPASS_SERVERS) {
+      if (isSuccess) break;
 
-      setHospitals(formattedHospitals);
-    } catch (err) {
-      console.error("Failed to fetch hospitals:", err);
-      // Only show error if we don't have any data
-      if (hospitals.length === 0) {
-        setError("Failed to load hospital data.");
+      try {
+        console.log(`Attempting to fetch hospitals from: ${server}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+        const response = await fetch(`${server}?data=${encodeURIComponent(query)}`, {
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`Server ${server} responded with ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        const elements = data.elements;
+        
+        if (!elements) throw new Error("Invalid data format received");
+
+        const formattedHospitals: Hospital[] = elements.map((item: any) => {
+          const lat = item.lat || item.center?.lat;
+          const lng = item.lon || item.center?.lon;
+          
+          // Simulating some data not present in OSM for UI consistency
+          const rating = (Math.random() * (5.0 - 3.5) + 3.5).toFixed(1); 
+          
+          return {
+              place_id: item.id.toString(),
+              name: item.tags.name || "Unknown Hospital",
+              rating: parseFloat(rating),
+              vicinity: [
+                item.tags['addr:full'],
+                [
+                  item.tags['addr:housenumber'],
+                  item.tags['addr:street'],
+                  item.tags['addr:suburb'] || item.tags['addr:neighbourhood'],
+                  item.tags['addr:city']
+                ].filter(Boolean).join(', ')
+              ].find(Boolean) || "Address details unavailable",
+              lat: lat,
+              lng: lng,
+              isOpen: true // OSM data rarely has real-time opening status
+          };
+        }).filter((h: Hospital) => h.lat && h.lng && h.name !== "Unknown Hospital"); // Filter out invalid entries
+
+        setHospitals(formattedHospitals);
+        isSuccess = true;
+        console.log("Successfully fetched hospital data.");
+        
+      } catch (err: any) {
+        console.warn(`Failed to fetch from ${server}:`, err.message);
+        // Continue to next server
       }
-    } finally {
-      setIsLoadingHospitals(false);
     }
+
+    if (!isSuccess) {
+      // All servers failed
+      console.error("All Overpass API servers failed.");
+      if (hospitals.length === 0) {
+        setError("Unable to load nearby hospitals at this time. Please try again later.");
+      }
+    }
+    
+    setIsLoadingHospitals(false);
   };
 
   const handleHospitalSelect = (hospital: Hospital) => {
