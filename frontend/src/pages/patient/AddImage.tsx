@@ -149,22 +149,32 @@ export default function AddImage() {
         },
       };
 
-      const safeTitle = formData.title
-        ? formData.title
-            .replace(/\s+/g, "_")
-            .replace(/[^a-zA-Z0-9_-]/g, "")
-            .slice(0, 50)
-        : `image-${Date.now()}`;
-      const jsonFileName = `${safeTitle}_metadata.json`;
-      const hash = await services.ipfs.uploadJSON(imageMetadata, jsonFileName);
-      setIpfsHash(hash);
+      // Step 3: Create blockchain record (handles IPFS upload internally)
+      toast.loading("Creating blockchain record...", { id: "upload" });
+      const recordData = {
+        patientId: address,
+        recordType: 3, // IMAGING type
+        title: formData.title,
+        description: formData.description || "Medical Image Record",
+        hospitalName: "Patient Upload",
+        doctorName: "Self",
+        notes: JSON.stringify(imageMetadata, null, 2),
+        tags: [formData.recordType, "Image", "Patient Upload"],
+      };
+
+      const recordId = await services.patientRecords.createRecord(
+        address,
+        recordData,
+      );
+      console.log("Blockchain record created with ID:", recordId);
+      setIpfsHash(recordId.toString());
 
       // Step 4: Log to audit trail
       toast.loading("Recording in audit log...", { id: "upload" });
       await services.auditLog.logAccess(
         address,
-        0,
-        3,
+        recordId,
+        3, // UPLOAD
         "Patient",
         "patient",
         "Direct Upload",
@@ -173,7 +183,7 @@ export default function AddImage() {
       );
 
       // Step 5: Success
-      toast.success(`✓ Signed & uploaded to IPFS! Hash: ${hash}`, {
+      toast.success(`✓ Record created on blockchain! ID: ${recordId}`, {
         id: "upload",
         duration: 5000,
       });

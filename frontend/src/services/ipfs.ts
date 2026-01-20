@@ -217,23 +217,29 @@ class IPFSService {
     privateKey: string,
   ): Promise<object | null> {
     try {
+      console.log("🔍 Retrieving record from IPFS:", ipfsHash);
+
       // Get encrypted data from IPFS
       const encryptedData = await this.getFromIPFS(ipfsHash);
 
       if (!encryptedData) {
+        console.error("❌ Record not found on IPFS");
         throw new Error("Record not found on IPFS");
       }
 
+      console.log("🔓 Decrypting encryption key...");
       // Decrypt the encryption key
       const encryptionKey = this.decryptKeyForUser(encryptedKey, privateKey);
 
+      console.log("🔓 Decrypting record data...");
       // Decrypt the data
       const decryptedData = this.decryptData(encryptedData, encryptionKey);
 
+      console.log("✅ Record successfully decrypted");
       return JSON.parse(decryptedData);
-    } catch (error) {
-      console.error("Error retrieving record:", error);
-      return null;
+    } catch (error: any) {
+      console.error("❌ Error retrieving record:", error);
+      throw error;
     }
   }
 
@@ -247,17 +253,33 @@ class IPFSService {
     // Try fetching from public gateways
     for (const gateway of IPFS_GATEWAYS) {
       try {
+        console.log(`🌐 Fetching from ${gateway}${cid}`);
         const response = await fetch(`${gateway}${cid}`, {
-          signal: AbortSignal.timeout(5000),
+          signal: AbortSignal.timeout(10000),
+          mode: "cors",
         });
         if (response.ok) {
-          return await response.text();
+          const text = await response.text();
+          // If data was uploaded as JSON with { content: "..." }, extract it
+          try {
+            const json = JSON.parse(text);
+            if (json.content) {
+              console.log("✅ Retrieved and extracted content from IPFS");
+              return json.content;
+            }
+          } catch {
+            // Not JSON or doesn't have content field, return as-is
+          }
+          console.log("✅ Retrieved data from IPFS");
+          return text;
         }
-      } catch {
+      } catch (error) {
+        console.warn(`❌ Failed to fetch from ${gateway}:`, error);
         continue;
       }
     }
 
+    console.error("❌ Failed to retrieve from all IPFS gateways");
     return null;
   }
 

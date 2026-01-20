@@ -216,40 +216,35 @@ export default function ConvertToJson() {
         params: [message, address],
       });
 
-      toast.loading("Uploading JSON to IPFS...", { id: "upload" });
+      toast.loading("Creating blockchain record...", { id: "upload" });
 
-      // Create comprehensive metadata with signature
-      const uploadMetadata = {
-        ...jsonData,
-        uploadInfo: {
-          title: uploadForm.title,
-          recordType: uploadForm.recordType,
-          description: uploadForm.description,
-          originalFileName: file?.name || "unknown",
-          uploadedAt: new Date().toISOString(),
-          uploadedBy: address,
-          patientAddress: address,
-          signature: signature,
-          signedMessage: message,
-        },
+      // Create blockchain record (handles IPFS upload internally)
+      const recordData = {
+        patientId: address,
+        recordType: 0, // GENERAL type
+        title: uploadForm.title,
+        description: uploadForm.description || "Medical Data JSON",
+        hospitalName: "Patient Upload",
+        doctorName: "Self",
+        diagnosis: jsonData.diagnosis,
+        treatment: jsonData.treatment,
+        medications: jsonData.medications,
+        notes: JSON.stringify(jsonData, null, 2),
+        tags: [uploadForm.recordType, "JSON", "Patient Upload"],
       };
 
-      // Upload JSON to IPFS
-      const safeTitle = uploadForm.title
-        ? uploadForm.title
-            .replace(/\s+/g, "_")
-            .replace(/[^a-zA-Z0-9_-]/g, "")
-            .slice(0, 50)
-        : `record-${Date.now()}`;
-      const jsonFileName = `${safeTitle}_medical_data.json`;
-      const hash = await services.ipfs.uploadJSON(uploadMetadata, jsonFileName);
+      const recordId = await services.patientRecords.createRecord(
+        address,
+        recordData,
+      );
+      console.log("Blockchain record created with ID:", recordId);
 
       // Log to audit trail
       toast.loading("Recording in audit log...", { id: "upload" });
       await services.auditLog.logAccess(
         address,
-        0, // No specific record ID for direct IPFS uploads
-        3, // UPDATE/UPLOAD type
+        recordId,
+        3, // UPLOAD type
         "Patient",
         "patient",
         "Direct Upload",
@@ -257,7 +252,7 @@ export default function ConvertToJson() {
         navigator.userAgent.substring(0, 50),
       );
 
-      toast.success(`✓ Signed & uploaded to IPFS! Hash: ${hash}`, {
+      toast.success(`✓ Record created on blockchain! ID: ${recordId}`, {
         id: "upload",
         duration: 5000,
       });
