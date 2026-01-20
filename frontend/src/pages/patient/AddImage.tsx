@@ -153,9 +153,15 @@ export default function AddImage() {
         fileUrl: `https://gateway.pinata.cloud/ipfs/${fileUploadResult.ipfsHash}`,
       };
 
+      // Pass the existing IPFS upload result to avoid re-uploading as JSON
       const recordId = await services.patientRecords.createRecord(
         address,
         recordData,
+        {
+          ipfsHash: fileUploadResult.ipfsHash,
+          encryptedKey: fileUploadResult.encryptedKey,
+          fileHash: fileUploadResult.fileHash,
+        },
       );
       console.log("Blockchain record created with ID:", recordId);
       setIpfsHash(recordId.toString());

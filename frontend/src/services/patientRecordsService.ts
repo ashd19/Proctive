@@ -58,13 +58,34 @@ export class PatientRecordsService {
   async createRecord(
     patientAddress: string,
     recordData: MedicalRecordData,
+    existingIpfsResult?: {
+      ipfsHash: string;
+      encryptedKey: string;
+      metadataHash?: string;
+      fileHash?: string;
+    },
   ): Promise<number> {
     try {
-      // Encrypt and upload to IPFS
-      const ipfsResult = await ipfsService.uploadEncryptedRecord(
-        recordData,
-        patientAddress,
-      );
+      // Use existing IPFS result if provided (for file uploads), otherwise upload record data as JSON
+      let ipfsResult;
+      if (existingIpfsResult) {
+        ipfsResult = {
+          ipfsHash: existingIpfsResult.ipfsHash,
+          encryptedKey: existingIpfsResult.encryptedKey,
+          metadataHash:
+            existingIpfsResult.metadataHash ||
+            existingIpfsResult.fileHash ||
+            this.hashData(JSON.stringify(recordData)),
+        };
+        console.log("Using existing IPFS file upload:", ipfsResult.ipfsHash);
+      } else {
+        // Encrypt and upload JSON to IPFS
+        ipfsResult = await ipfsService.uploadEncryptedRecord(
+          recordData,
+          patientAddress,
+        );
+        console.log("Uploaded JSON record to IPFS:", ipfsResult.ipfsHash);
+      }
 
       // Call smart contract
       const tx = await this.patientRecordsContract.createRecord(
@@ -227,11 +248,52 @@ export class PatientRecordsService {
       }
 
       console.log("✅ Record data successfully retrieved and decrypted");
+
+      // If this is a file record (has isFile flag from IPFS or fileData from metadata)
+      if (data.isFile || data.fileData || data.mimeType) {
+        console.log("📄 File record detected");
+
+        // If we have the actual file content from IPFS
+        if (data.isFile && data.fileContent) {
+          console.log("📦 Converting base64 file content to blob URL");
+          // Convert base64 to blob
+          const binaryString = atob(data.fileContent);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          const blob = new Blob([bytes], { type: data.mimeType });
+          const fileUrl = URL.createObjectURL(blob);
+
+          return {
+            ...data,
+            fileUrl: fileUrl,
+            fileName: data.fileName,
+            fileSize: data.fileSize,
+            mimeType: data.mimeType,
+          };
+        }
+
+        // Fallback: construct IPFS gateway URL
+        return {
+          ...data,
+          fileUrl:
+            data.fileUrl ||
+            `https://gateway.pinata.cloud/ipfs/${record.ipfsHash}`,
+        };
+      }
+
       return data;
     } catch (error: any) {
       console.error("❌ Error retrieving record data:", error);
       throw new Error(error.message || "Failed to decrypt record data");
     }
+  }
+
+  // Hash data for verification
+  private hashData(data: string): string {
+    const CryptoJS = require("crypto-js");
+    return CryptoJS.SHA256(data).toString(CryptoJS.enc.Hex);
   }
 
   // Update record (metadata only, IPFS hash is immutable)
