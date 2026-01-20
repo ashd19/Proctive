@@ -179,7 +179,7 @@ export default function HospitalsMap() {
         console.log("Successfully fetched hospital data.");
         
       } catch (err: any) {
-        console.warn(`Failed to fetch from ${server}:`, err.message);
+        console.warn(` ${server}:`, err.message);
         // Continue to next server
       }
     }
