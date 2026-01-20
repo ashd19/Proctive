@@ -5,29 +5,39 @@ async function main() {
 
   const [deployer] = await hre.ethers.getSigners();
   console.log("Deploying contracts with account:", deployer.address);
-  console.log("Account balance:", (await hre.ethers.provider.getBalance(deployer.address)).toString());
+  console.log(
+    "Account balance:",
+    (await hre.ethers.provider.getBalance(deployer.address)).toString(),
+  );
   console.log("");
 
   // 1. Deploy VitalChainCore
   console.log("1️⃣  Deploying VitalChainCore...");
-  const VitalChainCore = await hre.ethers.getContractFactory("VitalChainCore");
-  const VitalChainCore = await VitalChainCore.deploy();
-  await VitalChainCore.waitForDeployment();
-  const VitalChainCoreAddress = await VitalChainCore.getAddress();
-  console.log("   VitalChainCore deployed to:", VitalChainCoreAddress);
+  const VitalChainCoreFactory = await hre.ethers.getContractFactory(
+    "contracts/VitalChainCore.sol:VitalChainCore",
+  );
+  const vitalChainCore = await VitalChainCoreFactory.deploy();
+  await vitalChainCore.waitForDeployment();
+  const vitalChainCoreAddress = await vitalChainCore.getAddress();
+  console.log("   VitalChainCore deployed to:", vitalChainCoreAddress);
 
   // 2. Deploy PatientRecords
   console.log("2️⃣  Deploying PatientRecords...");
   const PatientRecords = await hre.ethers.getContractFactory("PatientRecords");
-  const patientRecords = await PatientRecords.deploy(VitalChainCoreAddress);
+  const patientRecords = await PatientRecords.deploy(vitalChainCoreAddress);
   await patientRecords.waitForDeployment();
   const patientRecordsAddress = await patientRecords.getAddress();
   console.log("   PatientRecords deployed to:", patientRecordsAddress);
 
   // 3. Deploy AccessControlManager
   console.log("3️⃣  Deploying AccessControlManager...");
-  const AccessControlManager = await hre.ethers.getContractFactory("AccessControlManager");
-  const accessControl = await AccessControlManager.deploy(VitalChainCoreAddress, patientRecordsAddress);
+  const AccessControlManager = await hre.ethers.getContractFactory(
+    "AccessControlManager",
+  );
+  const accessControl = await AccessControlManager.deploy(
+    vitalChainCoreAddress,
+    patientRecordsAddress,
+  );
   await accessControl.waitForDeployment();
   const accessControlAddress = await accessControl.getAddress();
   console.log("   AccessControlManager deployed to:", accessControlAddress);
@@ -35,19 +45,25 @@ async function main() {
   // 4. Deploy AuditLog
   console.log("4️⃣  Deploying AuditLog...");
   const AuditLog = await hre.ethers.getContractFactory("AuditLog");
-  const auditLog = await AuditLog.deploy(VitalChainCoreAddress, patientRecordsAddress, accessControlAddress);
+  const auditLog = await AuditLog.deploy(
+    vitalChainCoreAddress,
+    patientRecordsAddress,
+    accessControlAddress,
+  );
   await auditLog.waitForDeployment();
   const auditLogAddress = await auditLog.getAddress();
   console.log("   AuditLog deployed to:", auditLogAddress);
 
   // 5. Deploy EmergencyAccess
   console.log("5️⃣  Deploying EmergencyAccess...");
-  const EmergencyAccess = await hre.ethers.getContractFactory("EmergencyAccess");
+  const EmergencyAccess = await hre.ethers.getContractFactory(
+    "EmergencyAccess",
+  );
   const emergencyAccess = await EmergencyAccess.deploy(
-    VitalChainCoreAddress,
+    vitalChainCoreAddress,
     patientRecordsAddress,
     accessControlAddress,
-    auditLogAddress
+    auditLogAddress,
   );
   await emergencyAccess.waitForDeployment();
   const emergencyAccessAddress = await emergencyAccess.getAddress();
@@ -55,12 +71,14 @@ async function main() {
 
   // 6. Deploy InsuranceClaims
   console.log("6️⃣  Deploying InsuranceClaims...");
-  const InsuranceClaims = await hre.ethers.getContractFactory("InsuranceClaims");
+  const InsuranceClaims = await hre.ethers.getContractFactory(
+    "InsuranceClaims",
+  );
   const insuranceClaims = await InsuranceClaims.deploy(
-    VitalChainCoreAddress,
+    vitalChainCoreAddress,
     patientRecordsAddress,
     accessControlAddress,
-    auditLogAddress
+    auditLogAddress,
   );
   await insuranceClaims.waitForDeployment();
   const insuranceClaimsAddress = await insuranceClaims.getAddress();
@@ -72,7 +90,7 @@ async function main() {
   console.log("=".repeat(60));
   console.log("📋 DEPLOYMENT SUMMARY");
   console.log("=".repeat(60));
-  console.log(`VitalChainCore:         ${VitalChainCoreAddress}`);
+  console.log(`VitalChainCore:         ${vitalChainCoreAddress}`);
   console.log(`PatientRecords:       ${patientRecordsAddress}`);
   console.log(`AccessControlManager: ${accessControlAddress}`);
   console.log(`AuditLog:             ${auditLogAddress}`);
@@ -86,52 +104,60 @@ async function main() {
     deployer: deployer.address,
     timestamp: new Date().toISOString(),
     contracts: {
-      VitalChainCore: VitalChainCoreAddress,
+      VitalChainCore: vitalChainCoreAddress,
       PatientRecords: patientRecordsAddress,
       AccessControlManager: accessControlAddress,
       AuditLog: auditLogAddress,
       EmergencyAccess: emergencyAccessAddress,
-      InsuranceClaims: insuranceClaimsAddress
-    }
+      InsuranceClaims: insuranceClaimsAddress,
+    },
   };
 
   const fs = require("fs");
   const path = require("path");
-  
+
   const deploymentsDir = path.join(__dirname, "../deployments");
   if (!fs.existsSync(deploymentsDir)) {
     fs.mkdirSync(deploymentsDir, { recursive: true });
   }
-  
+
   fs.writeFileSync(
     path.join(deploymentsDir, `${hre.network.name}.json`),
-    JSON.stringify(deploymentData, null, 2)
+    JSON.stringify(deploymentData, null, 2),
   );
-  
-  console.log(`\n📁 Deployment data saved to deployments/${hre.network.name}.json`);
+
+  console.log(
+    `\n📁 Deployment data saved to deployments/${hre.network.name}.json`,
+  );
 
   // Copy ABIs for frontend
-  const frontendContractsDir = path.join(__dirname, "../../frontend/src/contracts");
+  const frontendContractsDir = path.join(
+    __dirname,
+    "../../frontend/src/contracts",
+  );
   if (!fs.existsSync(frontendContractsDir)) {
     fs.mkdirSync(frontendContractsDir, { recursive: true });
   }
 
   const contractNames = [
     "VitalChainCore",
-    "PatientRecords", 
+    "PatientRecords",
     "AccessControlManager",
     "AuditLog",
     "EmergencyAccess",
-    "InsuranceClaims"
+    "InsuranceClaims",
   ];
 
   for (const name of contractNames) {
-    const artifactPath = path.join(__dirname, `../artifacts/contracts/${name}.sol/${name}.json`);
+    const artifactPath = path.join(
+      __dirname,
+      `../artifacts/contracts/${name}.sol/${name}.json`,
+    );
     if (fs.existsSync(artifactPath)) {
       const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf8"));
       fs.writeFileSync(
         path.join(frontendContractsDir, `${name}.json`),
-        JSON.stringify({ abi: artifact.abi }, null, 2)
+        JSON.stringify({ abi: artifact.abi }, null, 2),
       );
     }
   }
@@ -139,10 +165,12 @@ async function main() {
   // Create addresses file for frontend
   fs.writeFileSync(
     path.join(frontendContractsDir, "addresses.json"),
-    JSON.stringify(deploymentData.contracts, null, 2)
+    JSON.stringify(deploymentData.contracts, null, 2),
   );
 
-  console.log("📁 Contract ABIs and addresses copied to frontend/src/contracts/");
+  console.log(
+    "📁 Contract ABIs and addresses copied to frontend/src/contracts/",
+  );
 
   return deploymentData;
 }

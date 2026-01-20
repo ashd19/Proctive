@@ -9,7 +9,7 @@ import "./VitalChainCore.sol";
  * @dev Manages patient medical records with patient-controlled access
  */
 contract PatientRecords is ReentrancyGuard {
-    VitalChainCore public VitalChainCore;
+    VitalChainCore public vitalChainCore;
 
     enum RecordType { 
         GENERAL, 
@@ -73,22 +73,22 @@ contract PatientRecords is ReentrancyGuard {
     );
 
     modifier onlyRegisteredPatient() {
-        require(VitalChainCore.isRegisteredPatient(msg.sender), "Not a registered patient");
+        require(vitalChainCore.isRegisteredPatient(msg.sender), "Not a registered patient");
         _;
     }
 
     modifier onlyAuthorizedCreator() {
         require(
-            VitalChainCore.hasRole(VitalChainCore.DOCTOR_ROLE(), msg.sender) ||
-            VitalChainCore.hasRole(VitalChainCore.LAB_ROLE(), msg.sender) ||
-            VitalChainCore.hasRole(VitalChainCore.HOSPITAL_ROLE(), msg.sender),
+            vitalChainCore.hasRole(vitalChainCore.DOCTOR_ROLE(), msg.sender) ||
+            vitalChainCore.hasRole(vitalChainCore.LAB_ROLE(), msg.sender) ||
+            vitalChainCore.hasRole(vitalChainCore.HOSPITAL_ROLE(), msg.sender),
             "Not authorized to create records"
         );
         _;
     }
 
-    constructor(address _VitalChainCoreAddress) {
-        VitalChainCore = VitalChainCore(_VitalChainCoreAddress);
+    constructor(address _vitalChainCoreAddress) {
+        vitalChainCore = VitalChainCore(_vitalChainCoreAddress);
     }
 
     /**
@@ -116,7 +116,7 @@ contract PatientRecords is ReentrancyGuard {
         string memory _doctorName,
         string[] memory _tags
     ) external onlyAuthorizedCreator nonReentrant returns (uint256) {
-        require(VitalChainCore.isRegisteredPatient(_patient), "Patient not registered");
+        require(vitalChainCore.isRegisteredPatient(_patient), "Patient not registered");
         require(bytes(_ipfsHash).length > 0, "IPFS hash required");
         
         recordCounter++;

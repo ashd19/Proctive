@@ -10,7 +10,7 @@ import "./PatientRecords.sol";
  * @dev Manages patient-controlled access to medical records with consent management
  */
 contract AccessControlManager is ReentrancyGuard {
-    VitalChainCore public VitalChainCore;
+    VitalChainCore public vitalChainCore;
     PatientRecords public patientRecords;
 
     enum AccessLevel { 
@@ -106,23 +106,23 @@ contract AccessControlManager is ReentrancyGuard {
     );
 
     modifier onlyRegisteredPatient() {
-        require(VitalChainCore.isRegisteredPatient(msg.sender), "Not a registered patient");
+        require(vitalChainCore.isRegisteredPatient(msg.sender), "Not a registered patient");
         _;
     }
 
     modifier onlyAuthorizedRequester() {
         require(
-            VitalChainCore.hasRole(VitalChainCore.DOCTOR_ROLE(), msg.sender) ||
-            VitalChainCore.hasRole(VitalChainCore.LAB_ROLE(), msg.sender) ||
-            VitalChainCore.hasRole(VitalChainCore.HOSPITAL_ROLE(), msg.sender) ||
-            VitalChainCore.hasRole(VitalChainCore.INSURANCE_ROLE(), msg.sender),
+            vitalChainCore.hasRole(vitalChainCore.DOCTOR_ROLE(), msg.sender) ||
+            vitalChainCore.hasRole(vitalChainCore.LAB_ROLE(), msg.sender) ||
+            vitalChainCore.hasRole(vitalChainCore.HOSPITAL_ROLE(), msg.sender) ||
+            vitalChainCore.hasRole(vitalChainCore.INSURANCE_ROLE(), msg.sender),
             "Not authorized to request access"
         );
         _;
     }
 
-    constructor(address _VitalChainCoreAddress, address _patientRecordsAddress) {
-        VitalChainCore = VitalChainCore(_VitalChainCoreAddress);
+    constructor(address _vitalChainCoreAddress, address _patientRecordsAddress) {
+        vitalChainCore = VitalChainCore(_vitalChainCoreAddress);
         patientRecords = PatientRecords(_patientRecordsAddress);
     }
 
@@ -194,7 +194,7 @@ contract AccessControlManager is ReentrancyGuard {
         string memory _institutionName,
         uint256 _validityPeriod
     ) external onlyAuthorizedRequester nonReentrant returns (uint256) {
-        require(VitalChainCore.isRegisteredPatient(_patient), "Patient not registered");
+        require(vitalChainCore.isRegisteredPatient(_patient), "Patient not registered");
         require(_requestedLevel != AccessLevel.NONE, "Invalid access level");
 
         requestCounter++;
