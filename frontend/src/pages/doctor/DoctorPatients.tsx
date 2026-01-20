@@ -308,6 +308,8 @@ function RequestConsentModal({
   const [patientAddress, setPatientAddress] = useState("");
   const [purpose, setPurpose] = useState("");
   const [duration, setDuration] = useState("30");
+  const [institutionName, setInstitutionName] = useState("General Hospital");
+  const [accessLevel, setAccessLevel] = useState("2"); // VIEW_AND_DOWNLOAD
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -322,10 +324,17 @@ function RequestConsentModal({
       toast.loading("Requesting consent on blockchain...");
 
       const durationDays = parseInt(duration);
+      const level = parseInt(accessLevel);
+
+      // Request all records (empty array means all)
+      const recordIds: number[] = [];
+
       await services.accessControl.requestConsent(
         patientAddress,
-        doctorAddress,
+        recordIds,
+        level,
         purpose,
+        institutionName,
         durationDays,
       );
 
@@ -364,6 +373,36 @@ function RequestConsentModal({
               onChange={(e) => setPatientAddress(e.target.value)}
               placeholder="0x..."
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 font-mono text-sm"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Access Level
+            </label>
+            <select
+              value={accessLevel}
+              onChange={(e) => setAccessLevel(e.target.value)}
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              required
+            >
+              <option value="1">View Only</option>
+              <option value="2">View and Download</option>
+              <option value="3">Full Access</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Institution Name
+            </label>
+            <input
+              type="text"
+              value={institutionName}
+              onChange={(e) => setInstitutionName(e.target.value)}
+              placeholder="e.g., General Hospital"
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500"
               required
             />
           </div>
