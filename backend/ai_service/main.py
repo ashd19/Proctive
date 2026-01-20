@@ -22,12 +22,17 @@ app.add_middleware(
 model = None
 transform = None
 
+# Global device setting
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
 def get_model():
     global model, transform
     if model is None:
-        print("Loading TorchXrayVision model (DenseNet121-res224-all)...")
+        print(f"Loading TorchXrayVision model (DenseNet121-res224-all) on {device}...")
         # Load model that predicts all 18 pathologies
         model = xrv.models.DenseNet(weights="densenet121-res224-all")
+        model.to(device)
+        model.eval() # Set to eval mode
         transform = torchvision.transforms.Compose([xrv.datasets.XRayCenterCrop(),xrv.datasets.XRayResizer(224)])
         print("Model loaded successfully!")
     return model
@@ -36,116 +41,230 @@ import torchvision
 
 @app.get("/")
 def read_root():
-    return {"status": "ok", "service": "X-Ray AI Analysis"}
+    return {"status": "ok", "service": "X-Ray AI Analysis", "device": device}
+
+@app.on_event("startup")
+async def startup_event():
+    print("Pre-loading AI Model on startup...")
+    get_model()
+
+import open_clip
+
+# --- Models ---
+biomed_model = None
+biomed_preprocess = None
+biomed_tokenizer = None
+
+def get_biomed_model():
+    global biomed_model, biomed_preprocess, biomed_tokenizer
+    if biomed_model is None:
+        print(f"Loading BiomedCLIP (General Medical Expert) on {device}...")
+        try:
+            model_name = 'hf-hub:microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224'
+            biomed_model, _, biomed_preprocess = open_clip.create_model_and_transforms(model_name)
+            biomed_tokenizer = open_clip.get_tokenizer(model_name)
+            biomed_model.to(device)
+            biomed_model.eval()
+            print("BiomedCLIP loaded successfully!")
+        except Exception as e:
+            print(f"Failed to load BiomedCLIP: {e}")
+            return None
+    return biomed_model
 
 @app.post("/analyze")
 async def analyze_xray(file: UploadFile = File(...)):
     global model
     try:
-        if model is None:
-            get_model()
+        # Load models
+        chest_model = get_model()
+        biomed = get_biomed_model()
         
         # Read image
         contents = await file.read()
-        image = Image.open(io.BytesIO(contents)).convert('L') # Convert to grayscale
-        img = np.array(image)
+        pil_image = Image.open(io.BytesIO(contents)).convert('RGB') # BiomedCLIP needs RGB usually
         
-        # Normalize and Resize logic essential for xrv
-        # Resize to 224x224 first to match model input easier
-        image_resized = image.resize((224, 224))
-        img_array = np.array(image_resized)
+        # --- Stage 1: Modality Detection (BiomedCLIP) ---
+        modality = "Unknown"
+        is_chest_xray = True # Default fallback
         
-        # Keep original for dimensions
-        orig_w, orig_h = image.size
-        
-        # Normalize: XRV expects -1024 to 1024 range
-        img_array = xrv.datasets.normalize(img_array, 255) 
-        
-        # Add batch and channel dims [1, 1, 224, 224]
-        img_tensor = torch.from_numpy(img_array[None, None, ...]).float()
-        img_tensor.requires_grad = True # Enable gradient calculation
+        if biomed:
+            print("[AI] Detecting modality with BiomedCLIP...")
+            modalities = [
+                "Chest X-ray", 
+                "Brain MRI", 
+                "Skull X-ray", 
+                "Hand X-ray", 
+                "Bone Fracture X-ray", 
+                "Knee MRI",
+                "CT Scan"
+            ]
+            
+            image_input = biomed_preprocess(pil_image).unsqueeze(0).to(device)
+            text_input = biomed_tokenizer(modalities).to(device)
+            
+            with torch.no_grad():
+                image_features = biomed.encode_image(image_input)
+                text_features = biomed.encode_text(text_input)
+                image_features /= image_features.norm(dim=-1, keepdim=True)
+                text_features /= text_features.norm(dim=-1, keepdim=True)
+                
+                probs = (100.0 * image_features @ text_features.T).softmax(dim=-1)
+            
+            top_prob, top_idx = probs[0].topk(1)
+            modality = modalities[top_idx]
+            print(f"[AI] Detected Modality: {modality} ({top_prob.item():.2f})")
+            
+            if "Chest X-ray" not in modality and top_prob.item() > 0.5:
+                is_chest_xray = False
 
-        # Inference
-        # We need to capture features for Grad-CAM
-        # But for simpler "saliency" we can just gradient the input
-        # Better: use the model instructions.
+        # --- Stage 2: Specialist Analysis ---
         
-        outputs = model(img_tensor)
-        
-        # Outputs is [1, 18] Tensor
-        
-        predictions = {}
-        # Get top prediction index to localize
-        # Apply sigmoid to convert logits to probabilities?
-        # xrv DenseNet usually returns raw logits.
-        # But let's check values. If range is large (-10 to 10), it's logits.
-        # Assuming logits -> Sigmoid for standard probability
-        # Note: xrv models output is often already "appropriate" but usually logits.
-        
-        # Let's apply sigmoid just to be safe for 0-1 range
-        probs = torch.sigmoid(outputs)[0]
-        
-        # Prepare predictions dict
-        active_detections = []
-        
-        for i, pathology in enumerate(model.pathologies):
-            score = float(probs[i].item())
-            predictions[pathology] = score
-            if score > 0.5: # Threshold for "Active Detection" localization
-                 active_detections.append((i, pathology, score))
-        
-        # Sort by score
-        active_detections.sort(key=lambda x: x[2], reverse=True)
-        
-        # Localization Logic (Gradient of Top Detection input)
-        # Calculate coordinate of the most suspicious area
-        best_x, best_y = 112, 112 # Center default
-        
-        if len(active_detections) > 0:
-            top_idx = active_detections[0][0]
+        if is_chest_xray:
+            print("[AI] Routing to Chest Specialist (DenseNet)...")
+            # Convert to Grayscale for DenseNet
+            pil_gray = pil_image.convert('L')
             
-            # Zero gradients
-            if img_tensor.grad is not None:
-                img_tensor.grad.zero_()
-            
-            # Backproprogate the top class score
-            outputs[0, top_idx].backward()
-            
-            # Get gradients at input layer
-            gradients = img_tensor.grad[0, 0].abs() # [224, 224] maps
-            
-            # Smooth/Blur to find center of mass of hotspot
-            # Simple approach: Find index of max gradient pixel
-            # Better: Gaussian filter? Let's stick to simple Max for speed.
-            
-            # Find max simple
-            # flat_idx = gradients.argmax()
-            # y_idx, x_idx = np.unravel_index(flat_idx, gradients.shape)
-            
-            # Robust: Find Center of Mass of top 10% gradients
-            g_np = gradients.detach().numpy()
-            threshold = np.percentile(g_np, 95)
-            mask = g_np > threshold
-            if mask.sum() > 0:
-                y_indices, x_indices = np.where(mask)
-                best_y = int(np.mean(y_indices))
-                best_x = int(np.mean(x_indices))
-            
-            print(f"[AI] Localized {active_detections[0][1]} at {best_x}, {best_y}")
+            # --- Advanced Preprocessing (CLAHE) ---
+            img_np_raw = np.array(pil_gray)
+            try:
+               img_clahe = skimage.exposure.equalize_adapthist(img_np_raw, clip_limit=0.03)
+               img_clahe = (img_clahe * 255).astype(np.uint8)
+            except Exception:
+               img_clahe = img_np_raw
 
-        # Scale coordinates back to 0-100% range for frontend
-        x_percent = (best_x / 224) * 100
-        y_percent = (best_y / 224) * 100
+            # --- Test Time Augmentation (TTA) ---
+            variations = []
             
-        return {
-            "source": "local_torchxrayvision",
-            "model": "densenet121-res224-all",
-            "predictions": predictions,
-            "localization": {
-                "x": x_percent,
-                "y": y_percent
+            def prepare_tensor(img_arr):
+                img_pil = Image.fromarray(img_arr).resize((224, 224))
+                arr = np.array(img_pil)
+                arr = xrv.datasets.normalize(arr, 255)
+                t = torch.from_numpy(arr[None, None, ...]).float()
+                return t.to(device)
+
+            # 1. Original
+            t_orig = prepare_tensor(img_clahe)
+            t_orig.requires_grad = True # For GradCAM
+            variations.append(t_orig)
+            
+            # 2. Flip
+            img_flip = np.fliplr(img_clahe)
+            t_flip = prepare_tensor(img_flip)
+            variations.append(t_flip)
+            
+            # --- Inference & Grad-CAM ---
+            if chest_model is None: raise Exception("Chest model failed to load")
+            
+            # Hook for Grad-CAM
+            target_layer = chest_model.features.denseblock4.denselayer16
+            gradients = []
+            activations = []
+            
+            def backward_hook(module, grad_input, grad_output):
+                gradients.append(grad_output[0])
+            def forward_hook(module, input, output):
+                activations.append(output)
+            
+            h1 = target_layer.register_forward_hook(forward_hook)
+            h2 = target_layer.register_full_backward_hook(backward_hook)
+            
+            # TTA Runs
+            outputs_list = []
+            
+            # Pass 1 (Original)
+            out_orig = chest_model(t_orig)
+            outputs_list.append(torch.sigmoid(out_orig).detach().cpu().numpy()[0])
+            
+            # GradCAM Backprop
+            probs_orig = torch.sigmoid(out_orig)[0]
+            top_idx_cam = torch.argmax(probs_orig).item()
+            chest_model.zero_grad()
+            out_orig[0, top_idx_cam].backward()
+            
+            # Pass 2 (Flip)
+            with torch.no_grad():
+                out_flip = chest_model(t_flip)
+                outputs_list.append(torch.sigmoid(out_flip).detach().cpu().numpy()[0])
+                
+            h1.remove(); h2.remove()
+            
+            # Heatmap Gen
+            grads = gradients[0]; acts = activations[0]
+            weights = torch.mean(grads, dim=(2, 3))[0]
+            cam = torch.zeros(acts.shape[2:], device=device)
+            for i, w in enumerate(weights): cam += w * acts[0, i, :, :]
+            cam = torch.clamp(cam, min=0)
+            cam = cam - torch.min(cam); cam = cam / (torch.max(cam) + 1e-8)
+            
+            y_indices, x_indices = torch.where(cam == torch.max(cam))
+            best_y_feat = y_indices[0].item(); best_x_feat = x_indices[0].item()
+            feat_h, feat_w = cam.shape
+            best_x_pct = (best_x_feat / feat_w) * 100; best_y_pct = (best_y_feat / feat_h) * 100
+            
+            # Results
+            avg_preds = np.mean(outputs_list, axis=0)
+            predictions = {}
+            active_detections = []
+            
+            sorted_indices = np.argsort(avg_preds)[::-1]
+            for idx in sorted_indices[:5]:
+                pathology = chest_model.pathologies[idx]
+                score = float(avg_preds[idx])
+                predictions[pathology] = score
+                if score > 0.1: active_detections.append((pathology, score))
+            
+            active_detections.sort(key=lambda x: x[1], reverse=True)
+            
+            print(f"[AI] Localized {chest_model.pathologies[top_idx_cam]} via Grad-CAM at {best_x_pct:.1f}%, {best_y_pct:.1f}%")
+
+            return {
+                "source": "local_chest_specialist",
+                "model": "densenet121 + biomed_clip_router",
+                "device": device,
+                "modality_detected": modality,
+                "predictions": predictions,
+                "localization": { "x": best_x_pct, "y": best_y_pct }
             }
-        }
+
+        else:
+            # --- GENERAL MEDICAL ANALYSIS (BiomedCLIP) ---
+            print(f"[AI] Routing to General Specialist for {modality}...")
+            
+            # Define potential anomalies for this modality
+            anomalies = [
+                "Fracture", "Tumor", "Lesion", "Swelling", "Internal Bleeding", "Normal Healthy Tissue"
+            ]
+            
+            # Zero-shot classification for anomalies
+            image_input = biomed_preprocess(pil_image).unsqueeze(0).to(device)
+            text_input = biomed_tokenizer(anomalies).to(device)
+            
+            with torch.no_grad():
+                image_features = biomed.encode_image(image_input)
+                text_features = biomed.encode_text(text_input)
+                image_features /= image_features.norm(dim=-1, keepdim=True)
+                text_features /= text_features.norm(dim=-1, keepdim=True)
+                probs = (100.0 * image_features @ text_features.T).softmax(dim=-1)
+            
+            predictions = {}
+            active_detections = []
+            
+            for i, anomaly in enumerate(anomalies):
+                score = float(probs[0][i].item())
+                predictions[anomaly] = score
+                if score > 0.1 and anomaly != "Normal Healthy Tissue":
+                    active_detections.append((anomaly, score))
+            
+            active_detections.sort(key=lambda x: x[1], reverse=True)
+            
+            return {
+                "source": "local_biomed_clip",
+                "model": "biomed_clip_general",
+                "device": device,
+                "modality_detected": modality,
+                "predictions": predictions,
+                "localization": { "x": 50, "y": 50 } # No GradCAM for CLIP yet (complex), defaulting center
+            }
 
     except Exception as e:
         print(f"Error analyzing image: {e}")

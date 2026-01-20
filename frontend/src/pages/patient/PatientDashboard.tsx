@@ -197,6 +197,61 @@ export default function PatientDashboard() {
           </Link>
         </div>
 
+        {/* Smart Health Tools */}
+        <h2 className="text-xl font-bold text-slate-900 mb-4">Smart Health Tools</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Link
+            to="/patient/xray"
+            className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="bg-cyan-100 p-3 rounded-lg group-hover:bg-cyan-200 transition-colors">
+                <div className="w-6 h-6 text-cyan-600">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 4.5a2.5 2.5 0 0 0-4.96-.46 2.5 2.5 0 0 0-1.98 3 2.5 2.5 0 0 0-1.32 3 2.5 2.5 0 0 0 0 2 2.5 2.5 0 0 0 1.32 3 2.5 2.5 0 0 0 1.98 3 2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0 4.96.46 2.5 2.5 0 0 0 1.98-3 2.5 2.5 0 0 0 1.32-3 2.5 2.5 0 0 0 0-2 2.5 2.5 0 0 0-1.32-3 2.5 2.5 0 0 0-1.98-3 2.5 2.5 0 0 0-4.96.46 2.5 2.5 0 0 0-5 0Z"></path></svg>
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-900 mb-1">AI X-Ray Analysis</h3>
+                <p className="text-sm text-slate-600">Instant AI diagnostics for chest X-rays</p>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            to="/patient/hospitals"
+            className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="bg-red-100 p-3 rounded-lg group-hover:bg-red-200 transition-colors">
+                <div className="w-6 h-6 text-red-600">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-900 mb-1">Nearby Hospitals</h3>
+                <p className="text-sm text-slate-600">Find emergency care and clinics</p>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            to="/patient/trust"
+            className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="bg-emerald-100 p-3 rounded-lg group-hover:bg-emerald-200 transition-colors">
+                <div className="w-6 h-6 text-emerald-600">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path><path d="m9 12 2 2 4-4"></path></svg>
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-900 mb-1">Trust Visualizer</h3>
+                <p className="text-sm text-slate-600">Verify blockchain data integrity</p>
+              </div>
+            </div>
+          </Link>
+        </div>
+
         {/* Recent Activity */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <h2 className="text-xl font-bold text-slate-900 mb-4">Recent Activity</h2>

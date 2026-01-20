@@ -7,3 +7,5 @@ torchxrayvision
 pillow
 numpy
 requests
+transformers
+open_clip_torch

@@ -69,6 +69,10 @@ const CONDITION_REGIONS: Record<string, { x: [number, number], y: [number, numbe
   // General/Other
   'bone': { x: [25, 75], y: [20, 80] },
   'fracture': { x: [35, 65], y: [30, 70] },
+  'tumor': { x: [40, 60], y: [40, 60] },
+  'lesion': { x: [35, 65], y: [30, 70] },
+  'swelling': { x: [30, 70], y: [30, 70] },
+  'internal bleeding': { x: [40, 60], y: [40, 60] },
   'joint': { x: [40, 60], y: [40, 60] },
   'spine': { x: [45, 55], y: [20, 80] },
   'x-ray': { x: [30, 70], y: [25, 75] },
@@ -82,6 +86,11 @@ const CONDITION_SEVERITY: Record<string, 'high' | 'medium' | 'low'> = {
   'consolidation': 'high',
   'pleural effusion': 'high',
   'mass': 'high',
+  'tumor': 'high',
+  'internal bleeding': 'high',
+  'fracture': 'high',
+  'lesion': 'medium',
+  'swelling': 'medium',
   'lung nodule': 'medium',
   'pulmonary nodule': 'medium',
   'cardiomegaly': 'medium',
@@ -91,6 +100,7 @@ const CONDITION_SEVERITY: Record<string, 'high' | 'medium' | 'low'> = {
   'emphysema': 'medium',
   'infiltrate': 'medium',
   'normal chest': 'low',
+  'normal healthy tissue': 'low',
   'healthy': 'low',
   'lung': 'low',
   'heart': 'low',
@@ -107,8 +117,14 @@ const PATIENT_DESCRIPTIONS: Record<string, string> = {
   'pulmonary edema': 'Excess fluid in your lungs, often related to heart function.',
   'atelectasis': 'A small area of your lung appears deflated. This is often temporary.',
   'normal chest': 'This area appears healthy with no abnormalities detected.',
+  'normal healthy tissue': 'No abnormalities detected. The tissue structure appears healthy.',
   'healthy': 'This region looks completely normal with good tissue structure.',
   'rib fracture': 'A potential break in one of your ribs was detected.',
+  'fracture': 'A break or crack in the bone structure was detected.',
+  'tumor': 'An abnormal mass was detected. Urgent medical evaluation is recommended.',
+  'lesion': 'An area of abnormal tissue change was observed.',
+  'swelling': 'Inflammation or fluid buildup detected in this area.',
+  'internal bleeding': 'Potential signs of internal hemorrhage. Requires immediate attention.',
   'emphysema': 'Signs of air trapping in your lungs, often associated with COPD.',
 };
 
@@ -337,44 +353,92 @@ async function analyzeImageProperties(imageBlob: Blob): Promise<Array<{ label: s
   });
 }
 
+// Text variations to avoid "barging in same words"
+const TEXT_VARIATIONS = {
+  high: [
+    "Analysis indicates signs consistent with {label}.",
+    "Strong indicators for {label} observed in this region.",
+    "Patterns resembling {label} detected with high confidence.",
+    "The model highlights probable {label} in this area."
+  ],
+  medium: [
+    "Possible indicators of {label} detected.",
+    "This region shows features that may suggest {label}.",
+    "AI analysis flagged potential {label} here.",
+    "Moderate signs of {label} observed."
+  ],
+  low: [
+    "Minor patterns resembling {label} noted.",
+    "Low-confidence trace of {label}.",
+    "The scan is mostly clear, but slight {label} markers exist.",
+    "Ambiguous features potentially related to {label}."
+  ]
+};
+
+// Helper to get random variation
+function getVariedText(severity: 'high' | 'medium' | 'low', label: string): string {
+  const templates = TEXT_VARIATIONS[severity];
+  const template = templates[Math.floor(Math.random() * templates.length)];
+  return template.replace('{label}', label.toLowerCase());
+}
+
 // Map label to medical finding
 function mapToMedicalFinding(label: string, score: number): AIDetection | null {
   const lowerLabel = label.toLowerCase();
   
   // Find matching region
   let matchedRegion = CONDITION_REGIONS['thorax']; // Default
-  let matchedSeverity: 'high' | 'medium' | 'low' = 'low';
+  let baseSeverity: 'high' | 'medium' | 'low' = 'low';
   let matchedCondition = label;
   
   for (const [condition, region] of Object.entries(CONDITION_REGIONS)) {
     if (lowerLabel.includes(condition) || condition.includes(lowerLabel)) {
       matchedRegion = region;
-      matchedSeverity = CONDITION_SEVERITY[condition] || 'low';
+      baseSeverity = CONDITION_SEVERITY[condition] || 'low';
       matchedCondition = condition;
       break;
     }
   }
 
-  // Calculate random position within region
+  // Calculate random position within region (frontend fallback only)
+  // Backend localization usually overrides this.
   const x = matchedRegion.x[0] + Math.random() * (matchedRegion.x[1] - matchedRegion.x[0]);
   const y = matchedRegion.y[0] + Math.random() * (matchedRegion.y[1] - matchedRegion.y[0]);
 
-  // Clinical description based on confidence
-  const clinicalDesc = score > 0.8 
-    ? `High-confidence detection of ${label}. Recommend clinical correlation.`
-    : score > 0.5
-    ? `Possible ${label} detected. Further investigation recommended.`
-    : `Low-confidence observation of ${label}. May require additional imaging.`;
+  // Determine Confidence Tier (Softer Logic)
+  let confidenceTier: 'high' | 'medium' | 'low';
+  if (score > 0.75) confidenceTier = 'high';
+  else if (score > 0.40) confidenceTier = 'medium';
+  else confidenceTier = 'low';
+
+  // Override severity based on confidence? 
+  // User wants "softer" anomalies. 
+  // Even if Pneumonia is "High Severity" medically, if confidence is Low, we show it as Low urgency.
+  let displaySeverity: 'high' | 'medium' | 'low' = baseSeverity;
+  if (confidenceTier === 'low') displaySeverity = 'low';
+  if (confidenceTier === 'medium' && displaySeverity === 'high') displaySeverity = 'medium';
+
+  // Generate varied text
+  const clinicalDesc = getVariedText(confidenceTier, label);
+
+  // Patient friendly description
+  let patientDesc = PATIENT_DESCRIPTIONS[matchedCondition] || `Potential indicators of ${label.toLowerCase()}.`;
+  
+  // Soften patient text based on confidence
+  if (confidenceTier === 'low') {
+      patientDesc = `Note: Slight traces resembling ${label.toLowerCase()} were flagged, but this is likely not significant.`;
+  } else if (confidenceTier === 'medium') {
+      patientDesc = `We detected potential signs of ${label.toLowerCase()}. This is not a diagnosis, but worth verifying.`;
+  }
 
   return {
     label: label.charAt(0).toUpperCase() + label.slice(1),
     score,
     patientLabel: formatPatientLabel(label),
     description: clinicalDesc,
-    patientDescription: PATIENT_DESCRIPTIONS[matchedCondition] || 
-      `The AI detected ${label.toLowerCase()} in this region. Your doctor will review this finding.`,
+    patientDescription: patientDesc,
     region: { x, y },
-    severity: matchedSeverity,
+    severity: displaySeverity,
   };
 }
 
@@ -389,8 +453,14 @@ function formatPatientLabel(label: string): string {
     'pulmonary edema': 'Lung Fluid',
     'atelectasis': 'Collapsed Lung Area',
     'normal chest': 'Healthy Area',
+    'normal healthy tissue': 'Healthy Tissue',
     'healthy': 'Normal Finding',
     'rib fracture': 'Possible Rib Injury',
+    'fracture': 'Bone Fracture',
+    'tumor': 'Abnormal Mass',
+    'lesion': 'Tissue Lesion',
+    'swelling': 'Inflammation',
+    'internal bleeding': 'Internal Hemorrhage',
     'emphysema': 'Air Trapping',
     'chest': 'Chest Region',
     'lung': 'Lung Tissue',

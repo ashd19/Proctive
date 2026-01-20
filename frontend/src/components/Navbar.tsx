@@ -75,10 +75,10 @@ export default function Navbar({ otherThanLanding }: { otherThanLanding?: boolea
                                 <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
                             </button>
                             
-                            <div className="absolute top-full right-0 mt-2 w-56 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 ease-out">
+                            <div className="absolute top-full right-0 mt-2 w-56 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 pointer-events-none group-hover:pointer-events-auto transition-all duration-300 delay-150 ease-out">
                                 <div className="p-2 bg-white rounded-xl shadow-xl border border-slate-100 ring-1 ring-black/5">
                                     <div className="space-y-1">
-                                        <Link to="/xray-demo" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors group/item">
+                                        <Link to="/patient/xray" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors group/item">
                                             <div className="p-2 rounded-md bg-blue-50 text-blue-600 group-hover/item:bg-blue-100 transition-colors">
                                                 <Brain className="w-4 h-4" />
                                             </div>
@@ -88,7 +88,7 @@ export default function Navbar({ otherThanLanding }: { otherThanLanding?: boolea
                                             </div>
                                         </Link>
                                         
-                                        <Link to="/trust-demo" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors group/item">
+                                        <Link to="/patient/trust" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors group/item">
                                             <div className="p-2 rounded-md bg-emerald-50 text-emerald-600 group-hover/item:bg-emerald-100 transition-colors">
                                                 <ShieldCheck className="w-4 h-4" />
                                             </div>
@@ -98,7 +98,7 @@ export default function Navbar({ otherThanLanding }: { otherThanLanding?: boolea
                                             </div>
                                         </Link>
 
-                                        <Link to="/hospitals" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors group/item">
+                                        <Link to="/patient/hospitals" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors group/item">
                                             <div className="p-2 rounded-md bg-red-50 text-red-600 group-hover/item:bg-red-100 transition-colors">
                                                 <MapPin className="w-4 h-4" />
                                             </div>

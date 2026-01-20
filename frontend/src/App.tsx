@@ -59,9 +59,12 @@ function App() {
       {/* Public / Auth */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/auth" element={<Auth />} />
-      <Route path="/hospitals" element={<HospitalsPage/>}/>
-      <Route path="/trust-demo" element={<TrustVisualizerPage/>}/>
-      <Route path="/xray-demo" element={<XrayVisualizerPage/>}/>
+
+
+      {/* Compatibility Redirects */}
+      <Route path="/xray-demo" element={<Navigate to="/patient/xray" replace />} />
+      <Route path="/hospitals" element={<Navigate to="/patient/hospitals" replace />} />
+      <Route path="/trust-demo" element={<Navigate to="/patient/trust" replace />} />
 
       {/* Patient Routes */}
       <Route
@@ -76,6 +79,9 @@ function App() {
         <Route path="claims" element={<PatientClaims />} />
         <Route path="audit" element={<PatientAuditLog />} />
         <Route path="addPdf" element={<AddPdf />} />
+        <Route path="xray" element={<XrayVisualizerPage />} />
+        <Route path="hospitals" element={<HospitalsPage />} />
+        <Route path="trust" element={<TrustVisualizerPage />} />
       </Route>
 
       {/* Doctor Routes */}
