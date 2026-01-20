@@ -27,6 +27,7 @@ export default function ConvertToJson() {
   const [uploading, setUploading] = useState(false);
   const [jsonData, setJsonData] = useState<any>(null);
   const [jsonString, setJsonString] = useState<string>("");
+  const [showFullJson, setShowFullJson] = useState(false);
   const [uploadForm, setUploadForm] = useState({
     title: "",
     recordType: "",
@@ -173,6 +174,7 @@ export default function ConvertToJson() {
     setFile(null);
     setJsonData(null);
     setJsonString("");
+    setShowFullJson(false);
     setUploadForm({ title: "", recordType: "", description: "" });
   };
 
@@ -187,36 +189,16 @@ export default function ConvertToJson() {
       return;
     }
 
-    if (!services || !services.ipfs || !services.auditLog) {
+    if (!services || !services.patientRecords || !services.auditLog) {
       toast.error("Services are still loading, please wait...");
       return;
     }
 
     setUploading(true);
     try {
-      // Step 1: Request MetaMask signature
-      toast.loading("Please sign the transaction in MetaMask...", {
+      toast.loading("Uploading to IPFS and creating blockchain record...", {
         id: "upload",
       });
-
-      const message = `Upload medical data to IPFS\nTitle: ${
-        uploadForm.title
-      }\nType: ${
-        uploadForm.recordType
-      }\nTimestamp: ${new Date().toISOString()}`;
-
-      // Request signature from MetaMask
-      const provider = (window as any).ethereum;
-      if (!provider) {
-        throw new Error("MetaMask not found");
-      }
-
-      const signature = await provider.request({
-        method: "personal_sign",
-        params: [message, address],
-      });
-
-      toast.loading("Creating blockchain record...", { id: "upload" });
 
       // Create blockchain record (handles IPFS upload internally)
       const recordData = {
@@ -240,7 +222,7 @@ export default function ConvertToJson() {
       console.log("Blockchain record created with ID:", recordId);
 
       // Log to audit trail
-      toast.loading("Recording in audit log...", { id: "upload" });
+      toast.loading("Logging to audit trail...", { id: "upload" });
       await services.auditLog.logAccess(
         address,
         recordId,
@@ -252,7 +234,7 @@ export default function ConvertToJson() {
         navigator.userAgent.substring(0, 50),
       );
 
-      toast.success(`✓ Record created on blockchain! ID: ${recordId}`, {
+      toast.success(`✓ Record uploaded to IPFS & blockchain! ID: ${recordId}`, {
         id: "upload",
         duration: 5000,
       });
@@ -505,8 +487,19 @@ export default function ConvertToJson() {
                     </div>
                     <div className="flex-1 overflow-auto">
                       <pre className="p-6 text-xs font-mono text-slate-800 whitespace-pre-wrap break-words">
-                        {jsonString}
+                        {showFullJson
+                          ? jsonString
+                          : jsonString.split("\n").slice(0, 3).join("\n") +
+                            "\n..."}
                       </pre>
+                      <div className="px-6 pb-6">
+                        <button
+                          onClick={() => setShowFullJson(!showFullJson)}
+                          className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
+                        >
+                          {showFullJson ? "▲ Show Less" : "▼ See More"}
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 )}

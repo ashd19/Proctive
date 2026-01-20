@@ -91,23 +91,20 @@ class IPFSService {
           return await this.uploadJSONToPinata({ content: data });
         }
       } catch (error) {
-        console.warn("Pinata upload failed, using local storage:", error);
-        this.usePinata = false;
+        console.error("❌ Pinata upload failed:", error);
+        console.error(
+          "Error details:",
+          error instanceof Error ? error.message : String(error),
+        );
+        throw new Error(
+          `IPFS upload failed: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
       }
     }
 
-    // Fallback to local storage
-    let content: string;
-    if (data instanceof File) {
-      content = await this.fileToBase64(data);
-    } else {
-      content = data;
-    }
-
-    const hash = this.hashData(content + Date.now().toString());
-    const cid = `Qm${hash.substring(0, 44)}`;
-    this.localStore.set(cid, content);
-    return cid;
+    throw new Error("Pinata API key not configured");
   }
 
   // Upload JSON to Pinata
@@ -121,6 +118,10 @@ class IPFSService {
     filename?: string,
   ): Promise<string> {
     const name = filename ? filename : `VitalChain-${Date.now()}.json`;
+
+    console.log("📤 Uploading to Pinata:", name);
+    console.log("📦 Data size:", JSON.stringify(jsonData).length, "bytes");
+
     const response = await fetch(PINATA_API_URL, {
       method: "POST",
       headers: {
@@ -145,10 +146,15 @@ class IPFSService {
     });
 
     if (!response.ok) {
-      throw new Error(`Pinata upload failed: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error("❌ Pinata error response:", errorText);
+      throw new Error(
+        `Pinata upload failed (${response.status}): ${errorText}`,
+      );
     }
 
     const result = await response.json();
+    console.log("✅ Pinata upload successful! Hash:", result.IpfsHash);
     return result.IpfsHash;
   }
 
