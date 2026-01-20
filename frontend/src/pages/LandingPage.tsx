@@ -1,5 +1,5 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   Shield,
   Users,
@@ -13,271 +13,308 @@ import {
   Sparkles,
   Wallet,
   ChevronRight,
-  Globe
-} from 'lucide-react'
-import { useWalletStore } from '../store/walletStore'
-import toast from 'react-hot-toast'
-import { ipfsService } from '../services/ipfs'
-import { useState } from 'react'
-import Navbar from '@/components/Navbar'
+  Globe,
+} from "lucide-react";
+import { useWalletStore } from "../store/walletStore";
+import toast from "react-hot-toast";
+import { ipfsService } from "../services/ipfs";
+import { useState } from "react";
+import Navbar from "@/components/Navbar";
 
 const features = [
   {
     icon: Shield,
-    title: 'Patient-Controlled Access',
-    description: 'Smart contracts ensure medical records can only be viewed with explicit digital consent from patients.',
-    color: 'from-blue-500 to-indigo-600',
+    title: "Patient-Controlled Access",
+    description:
+      "Smart contracts ensure medical records can only be viewed with explicit digital consent from patients.",
+    color: "from-blue-500 to-indigo-600",
   },
   {
     icon: Database,
-    title: 'Interoperable Data Schema',
-    description: 'Convert various hospital record formats into standardized, blockchain-compatible structure.',
-    color: 'from-purple-500 to-pink-600',
+    title: "Interoperable Data Schema",
+    description:
+      "Convert various hospital record formats into standardized, blockchain-compatible structure.",
+    color: "from-purple-500 to-pink-600",
   },
   {
     icon: Clock,
-    title: 'Tamper-Evident Audit Logs',
-    description: 'Every access is recorded with professional name, timestamp, and immutable verification.',
-    color: 'from-green-500 to-emerald-600',
+    title: "Tamper-Evident Audit Logs",
+    description:
+      "Every access is recorded with professional name, timestamp, and immutable verification.",
+    color: "from-green-500 to-emerald-600",
   },
   {
     icon: Globe,
-    title: 'Distributed Storage',
-    description: 'Medical images stored on IPFS while access metadata remains securely on the blockchain.',
-    color: 'from-orange-500 to-red-600',
+    title: "Distributed Storage",
+    description:
+      "Medical images stored on IPFS while access metadata remains securely on the blockchain.",
+    color: "from-orange-500 to-red-600",
   },
   {
     icon: AlertTriangle,
-    title: 'Emergency Access Protocol',
-    description: 'Authorized doctors can bypass consent in emergencies, with all events flagged for audit.',
-    color: 'from-red-500 to-rose-600',
+    title: "Emergency Access Protocol",
+    description:
+      "Authorized doctors can bypass consent in emergencies, with all events flagged for audit.",
+    color: "from-red-500 to-rose-600",
   },
   {
     icon: Receipt,
-    title: 'Insurance Automation',
-    description: 'Share verified treatment data with insurers to accelerate claim settlement.',
-    color: 'from-cyan-500 to-blue-600',
+    title: "Insurance Automation",
+    description:
+      "Share verified treatment data with insurers to accelerate claim settlement.",
+    color: "from-cyan-500 to-blue-600",
   },
-]
+];
 
 const stats = [
-  { value: '100K+', label: 'Records Secured' },
-  { value: '500+', label: 'Healthcare Providers' },
-  { value: '99.9%', label: 'Uptime' },
-  { value: '0', label: 'Data Breaches' },
-]
+  { value: "100K+", label: "Records Secured" },
+  { value: "500+", label: "Healthcare Providers" },
+  { value: "99.9%", label: "Uptime" },
+  { value: "0", label: "Data Breaches" },
+];
 
 const roles = [
   {
-    id: 'patient',
-    title: 'Patient',
-    description: 'Manage your health records, control access, and track who views your data.',
+    id: "patient",
+    title: "Patient",
+    description:
+      "Manage your health records, control access, and track who views your data.",
     icon: Users,
-    path: '/patient',
-    color: 'from-primary-500 to-primary-600',
+    path: "/patient",
+    color: "from-primary-500 to-primary-600",
   },
   {
-    id: 'doctor',
-    title: 'Healthcare Provider',
-    description: 'Access patient records, request consent, and handle emergency situations.',
+    id: "doctor",
+    title: "Healthcare Provider",
+    description:
+      "Access patient records, request consent, and handle emergency situations.",
     icon: Activity,
-    path: '/doctor',
-    color: 'from-medical-500 to-medical-600',
+    path: "/doctor",
+    color: "from-medical-500 to-medical-600",
   },
   {
-    id: 'insurance',
-    title: 'Insurance Provider',
-    description: 'Process claims efficiently with verified medical data and automated workflows.',
+    id: "insurance",
+    title: "Insurance Provider",
+    description:
+      "Process claims efficiently with verified medical data and automated workflows.",
     icon: Receipt,
-    path: '/insurance',
-    color: 'from-emerald-500 to-emerald-600',
+    path: "/insurance",
+    color: "from-emerald-500 to-emerald-600",
   },
-]
+];
 
 export default function LandingPage() {
-  const navigate = useNavigate()
-  const { connect, isConnected, setRole, isLoading, signer, address } = useWalletStore()
-  const [ipfsHash, setIpfsHash] = useState<string>('')
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const navigate = useNavigate();
+  const {
+    connect,
+    disconnect,
+    isConnected,
+    setRole,
+    isLoading,
+    signer,
+    address,
+  } = useWalletStore();
+  const [ipfsHash, setIpfsHash] = useState<string>("");
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   const handleConnect = async () => {
     try {
-      await connect()
-      toast.success('Wallet connected successfully!')
+      await connect();
+      toast.success("Wallet connected successfully!");
     } catch (error: any) {
-      toast.error(error.message || 'Failed to connect wallet')
+      toast.error(error.message || "Failed to connect wallet");
     }
-  }
+  };
 
-  const handleRoleSelect = (role: 'patient' | 'doctor' | 'insurance', path: string) => {
+  const handleDisconnect = () => {
+    disconnect();
+  };
+
+  const handleRoleSelect = (
+    role: "patient" | "doctor" | "insurance",
+    path: string,
+  ) => {
     if (!isConnected) {
-      toast.error('Please connect your wallet first')
-      return
+      toast.error("Please connect your wallet first");
+      return;
     }
-    setRole(role)
-    navigate(path)
-  }
+    setRole(role);
+    navigate(path);
+  };
 
   // Test signing a message
   const handleTestSignMessage = async () => {
     if (!signer) {
-      toast.error('Please connect your wallet first')
-      return
+      toast.error("Please connect your wallet first");
+      return;
     }
-    
+
     try {
-      const message = `VitalChain Test Signature\nTimestamp: ${new Date().toISOString()}\nAddress: ${address}`
-      toast.loading('Please sign the message in MetaMask...')
-      
-      const signature = await signer.signMessage(message)
-      
-      toast.dismiss()
-      toast.success('Message signed successfully!')
-      console.log('Signature:', signature)
-      console.log('Message:', message)
+      const message = `VitalChain Test Signature\nTimestamp: ${new Date().toISOString()}\nAddress: ${address}`;
+      toast.loading("Please sign the message in MetaMask...");
+
+      const signature = await signer.signMessage(message);
+
+      toast.dismiss();
+      toast.success("Message signed successfully!");
+      console.log("Signature:", signature);
+      console.log("Message:", message);
     } catch (error: any) {
-      toast.dismiss()
-      toast.error(error.message || 'Failed to sign message')
-      console.error('Signing error:', error)
+      toast.dismiss();
+      toast.error(error.message || "Failed to sign message");
+      console.error("Signing error:", error);
     }
-  }
+  };
 
   // Test sending a simple transaction
   const handleTestTransaction = async () => {
     if (!signer) {
-      toast.error('Please connect your wallet first')
-      return
+      toast.error("Please connect your wallet first");
+      return;
     }
-    
+
     try {
-      toast.loading('Please confirm the transaction in MetaMask...')
-      
+      toast.loading("Please confirm the transaction in MetaMask...");
+
       // Send 0.001 ETH to yourself (you can change the address)
       const tx = await signer.sendTransaction({
         to: address, // Sending to yourself as a test
-        value: '1000000000000000' // 0.001 ETH in wei
-      })
-      
-      toast.dismiss()
-      toast.loading('Transaction sent! Waiting for confirmation...')
-      
-      const receipt = await tx.wait()
-      
-      toast.dismiss()
-      toast.success('Transaction confirmed!')
-      console.log('Transaction receipt:', receipt)
+        value: "1000000000000000", // 0.001 ETH in wei
+      });
+
+      toast.dismiss();
+      toast.loading("Transaction sent! Waiting for confirmation...");
+
+      const receipt = await tx.wait();
+
+      toast.dismiss();
+      toast.success("Transaction confirmed!");
+      console.log("Transaction receipt:", receipt);
     } catch (error: any) {
-      toast.dismiss()
-      if (error.code === 'ACTION_REJECTED') {
-        toast.error('Transaction rejected by user')
+      toast.dismiss();
+      if (error.code === "ACTION_REJECTED") {
+        toast.error("Transaction rejected by user");
       } else {
-        toast.error(error.message || 'Transaction failed')
+        toast.error(error.message || "Transaction failed");
       }
-      console.error('Transaction error:', error)
+      console.error("Transaction error:", error);
     }
-  }
+  };
 
   // Test IPFS upload (medical record simulation)
   const handleTestIPFSUpload = async () => {
     try {
-      toast.loading('Encrypting and uploading to Pinata IPFS...')
-      
+      toast.loading("Encrypting and uploading to Pinata IPFS...");
+
       // Sample medical record
       const medicalRecord = {
         patientId: address,
-        recordType: 'Test Record',
+        recordType: "Test Record",
         date: new Date().toISOString(),
-        diagnosis: 'Sample Diagnosis for Testing',
-        treatment: 'Test Treatment',
-        notes: 'This is a simulated medical record for IPFS testing',
-        timestamp: Date.now()
-      }
+        diagnosis: "Sample Diagnosis for Testing",
+        treatment: "Test Treatment",
+        notes: "This is a simulated medical record for IPFS testing",
+        timestamp: Date.now(),
+      };
 
       // Use wallet address as public key for demo
-      const result = await ipfsService.uploadEncryptedRecord(medicalRecord, address || '')
-      
-      toast.dismiss()
-      toast.success('✓ Uploaded to IPFS! View at gateway.pinata.cloud')
-      setIpfsHash(result.ipfsHash)
-      
-      console.log('IPFS Upload Result:', {
+      const result = await ipfsService.uploadEncryptedRecord(
+        medicalRecord,
+        address || "",
+      );
+
+      toast.dismiss();
+      toast.success("✓ Uploaded to IPFS! View at gateway.pinata.cloud");
+      setIpfsHash(result.ipfsHash);
+
+      console.log("IPFS Upload Result:", {
         ipfsHash: result.ipfsHash,
         pinataUrl: `https://gateway.pinata.cloud/ipfs/${result.ipfsHash}`,
         encryptedKey: result.encryptedKey,
         metadataHash: result.metadataHash,
-        originalData: medicalRecord
-      })
+        originalData: medicalRecord,
+      });
     } catch (error: any) {
-      toast.dismiss()
-      toast.error(error.message || 'Failed to upload to IPFS')
-      console.error('IPFS upload error:', error)
+      toast.dismiss();
+      toast.error(error.message || "Failed to upload to IPFS");
+      console.error("IPFS upload error:", error);
     }
-  }
+  };
 
   // Test IPFS file upload
-  const handleTestIPFSFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+  const handleTestIPFSFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
     try {
-      toast.loading(`Uploading ${file.name} to IPFS...`)
-      setUploadedFile(file)
-      
-      const result = await ipfsService.uploadEncryptedFile(file, address || '')
-      
-      toast.dismiss()
-      toast.success('✓ File uploaded to IPFS!')
-      setIpfsHash(result.ipfsHash)
-      
-      console.log('IPFS File Upload Result:', {
+      toast.loading(`Uploading ${file.name} to IPFS...`);
+      setUploadedFile(file);
+
+      const result = await ipfsService.uploadEncryptedFile(file, address || "");
+
+      toast.dismiss();
+      toast.success("✓ File uploaded to IPFS!");
+      setIpfsHash(result.ipfsHash);
+
+      console.log("IPFS File Upload Result:", {
         ipfsHash: result.ipfsHash,
         pinataUrl: `https://gateway.pinata.cloud/ipfs/${result.ipfsHash}`,
         fileName: result.fileName,
         fileSize: result.fileSize,
         mimeType: result.mimeType,
         fileHash: result.fileHash,
-        encryptedKey: result.encryptedKey
-      })
+        encryptedKey: result.encryptedKey,
+      });
     } catch (error: any) {
-      toast.dismiss()
-      toast.error(error.message || 'Failed to upload file')
-      console.error('File upload error:', error)
+      toast.dismiss();
+      toast.error(error.message || "Failed to upload file");
+      console.error("File upload error:", error);
     }
-  }
+  };
 
   // Test IPFS retrieve
   const handleTestIPFSRetrieve = async () => {
     if (!ipfsHash) {
-      toast.error('Upload something to IPFS first!')
-      return
+      toast.error("Upload something to IPFS first!");
+      return;
     }
 
     try {
-      toast.loading('Retrieving from IPFS...')
-      
+      toast.loading("Retrieving from IPFS...");
+
       // For demo, we'll just show that it's stored
-      const data = await ipfsService.getFromIPFS(ipfsHash)
-      
-      toast.dismiss()
+      const data = await ipfsService.getFromIPFS(ipfsHash);
+
+      toast.dismiss();
       if (data) {
-        toast.success('Data retrieved successfully!')
-        console.log('Retrieved IPFS Data (encrypted):', data.substring(0, 100) + '...')
-        console.log('IPFS Hash:', ipfsHash)
-        console.log('Full encrypted content length:', data.length)
+        toast.success("Data retrieved successfully!");
+        console.log(
+          "Retrieved IPFS Data (encrypted):",
+          data.substring(0, 100) + "...",
+        );
+        console.log("IPFS Hash:", ipfsHash);
+        console.log("Full encrypted content length:", data.length);
       } else {
-        toast.error('Data not found')
+        toast.error("Data not found");
       }
     } catch (error: any) {
-      toast.dismiss()
-      toast.error(error.message || 'Failed to retrieve from IPFS')
-      console.error('IPFS retrieve error:', error)
+      toast.dismiss();
+      toast.error(error.message || "Failed to retrieve from IPFS");
+      console.error("IPFS retrieve error:", error);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <Navbar isConnected={isConnected} isLoading={isLoading} handleConnect={handleConnect}/>
+      <Navbar
+        isConnected={isConnected}
+        isLoading={isLoading}
+        handleConnect={handleConnect}
+        handleDisconnect={handleDisconnect}
+      />
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 overflow-hidden">
@@ -285,7 +322,7 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-medical-50"></div>
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-400/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-medical-400/10 rounded-full blur-3xl"></div>
-        
+
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto">
             <motion.div
@@ -297,16 +334,16 @@ export default function LandingPage() {
                 <Sparkles className="w-4 h-4" />
                 Blockchain-Powered Healthcare
               </div>
-              
+
               <h1 className="text-5xl md:text-7xl font-bold text-slate-900 mb-6 leading-tight">
                 Secure Patient Health
                 <span className="gradient-text block">Data Exchange</span>
               </h1>
-              
+
               <p className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto">
-                Decentralized architecture for secure sharing of medical records. 
-                Empowering patients with ownership while providing doctors comprehensive, 
-                verified health information.
+                Decentralized architecture for secure sharing of medical
+                records. Empowering patients with ownership while providing
+                doctors comprehensive, verified health information.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -317,7 +354,7 @@ export default function LandingPage() {
                     className="btn-primary text-lg px-8 py-4 flex items-center gap-2"
                   >
                     <Wallet className="w-5 h-5" />
-                    {isLoading ? 'Connecting...' : 'Connect Wallet to Start'}
+                    {isLoading ? "Connecting..." : "Connect Wallet to Start"}
                     <ArrowRight className="w-5 h-5" />
                   </button>
                 ) : (
@@ -344,7 +381,9 @@ export default function LandingPage() {
             >
               {stats.map((stat, index) => (
                 <div key={index} className="text-center">
-                  <div className="text-4xl font-bold gradient-text mb-1">{stat.value}</div>
+                  <div className="text-4xl font-bold gradient-text mb-1">
+                    {stat.value}
+                  </div>
                   <div className="text-slate-500 text-sm">{stat.label}</div>
                 </div>
               ))}
@@ -379,7 +418,7 @@ export default function LandingPage() {
                   <Shield className="w-5 h-5" />
                   Sign Test Message
                 </button>
-                
+
                 <button
                   onClick={handleTestTransaction}
                   className="bg-white hover:bg-white/90 text-medical-600 font-semibold px-6 py-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
@@ -391,8 +430,12 @@ export default function LandingPage() {
 
               <div className="mt-6 text-xs text-white/60 text-center">
                 <p>✓ Sign Message: Opens MetaMask to sign a message (free)</p>
-                <p>✓ Send Transaction: Sends 0.001 ETH to yourself (requires gas)</p>
-                <p>Check browser console (F12) for signature/transaction details</p>
+                <p>
+                  ✓ Send Transaction: Sends 0.001 ETH to yourself (requires gas)
+                </p>
+                <p>
+                  Check browser console (F12) for signature/transaction details
+                </p>
               </div>
             </div>
           </div>
@@ -491,13 +534,27 @@ export default function LandingPage() {
 
               <div className="mt-6 p-4 bg-slate-100 rounded-lg">
                 <p className="text-xs text-slate-600 space-y-1">
-                  <strong className="block text-slate-900">How it works:</strong>
-                  <span className="block">✓ Data is encrypted with AES-256 before upload</span>
-                  <span className="block">✓ Encryption key is secured for the patient only</span>
-                  <span className="block">✓ Files uploaded to real IPFS via Pinata Cloud</span>
-                  <span className="block">✓ IPFS hash is permanently stored on the network</span>
-                  <span className="block">✓ Retrieve files from any IPFS gateway worldwide</span>
-                  <span className="block">✓ Check browser console (F12) for detailed output</span>
+                  <strong className="block text-slate-900">
+                    How it works:
+                  </strong>
+                  <span className="block">
+                    ✓ Data is encrypted with AES-256 before upload
+                  </span>
+                  <span className="block">
+                    ✓ Encryption key is secured for the patient only
+                  </span>
+                  <span className="block">
+                    ✓ Files uploaded to real IPFS via Pinata Cloud
+                  </span>
+                  <span className="block">
+                    ✓ IPFS hash is permanently stored on the network
+                  </span>
+                  <span className="block">
+                    ✓ Retrieve files from any IPFS gateway worldwide
+                  </span>
+                  <span className="block">
+                    ✓ Check browser console (F12) for detailed output
+                  </span>
                 </p>
               </div>
             </div>
@@ -513,7 +570,7 @@ export default function LandingPage() {
               Powerful Features for Modern Healthcare
             </h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Built with cutting-edge blockchain technology to ensure security, 
+              Built with cutting-edge blockchain technology to ensure security,
               transparency, and interoperability across healthcare systems.
             </p>
           </div>
@@ -528,15 +585,15 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 className="group bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100"
               >
-                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                <div
+                  className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 transition-transform duration-300`}
+                >
                   <feature.icon className="w-7 h-7 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 mb-3">
                   {feature.title}
                 </h3>
-                <p className="text-slate-600">
-                  {feature.description}
-                </p>
+                <p className="text-slate-600">{feature.description}</p>
               </motion.div>
             ))}
           </div>
@@ -551,16 +608,37 @@ export default function LandingPage() {
               How VitalChain Works
             </h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              A simple, secure workflow for managing health data across the ecosystem.
+              A simple, secure workflow for managing health data across the
+              ecosystem.
             </p>
           </div>
 
           <div className="grid md:grid-cols-4 gap-8">
             {[
-              { step: '01', title: 'Connect Wallet', description: 'Link your Web3 wallet to access the platform securely.' },
-              { step: '02', title: 'Upload Records', description: 'Healthcare providers upload encrypted records to IPFS.' },
-              { step: '03', title: 'Control Access', description: 'Patients grant or revoke access through smart contracts.' },
-              { step: '04', title: 'Verify & Share', description: 'Authorized parties access verified data with full audit trail.' },
+              {
+                step: "01",
+                title: "Connect Wallet",
+                description:
+                  "Link your Web3 wallet to access the platform securely.",
+              },
+              {
+                step: "02",
+                title: "Upload Records",
+                description:
+                  "Healthcare providers upload encrypted records to IPFS.",
+              },
+              {
+                step: "03",
+                title: "Control Access",
+                description:
+                  "Patients grant or revoke access through smart contracts.",
+              },
+              {
+                step: "04",
+                title: "Verify & Share",
+                description:
+                  "Authorized parties access verified data with full audit trail.",
+              },
             ].map((item, index) => (
               <motion.div
                 key={index}
@@ -575,9 +653,13 @@ export default function LandingPage() {
                 )}
                 <div className="relative z-10 text-center">
                   <div className="w-24 h-24 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary-100 to-medical-100 flex items-center justify-center">
-                    <span className="text-3xl font-bold gradient-text">{item.step}</span>
+                    <span className="text-3xl font-bold gradient-text">
+                      {item.step}
+                    </span>
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">{item.title}</h3>
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                    {item.title}
+                  </h3>
                   <p className="text-slate-600 text-sm">{item.description}</p>
                 </div>
               </motion.div>
@@ -587,7 +669,10 @@ export default function LandingPage() {
       </section>
 
       {/* Portal Selection */}
-      <section id="portals" className="py-20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <section
+        id="portals"
+        className="py-20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-4">
@@ -609,15 +694,15 @@ export default function LandingPage() {
                 onClick={() => handleRoleSelect(role.id as any, role.path)}
                 className="group text-left bg-slate-800/50 backdrop-blur-xl rounded-2xl p-8 border border-slate-700/50 hover:border-primary-500/50 transition-all duration-300 hover:shadow-glow"
               >
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${role.color} flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                <div
+                  className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${role.color} flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}
+                >
                   <role.icon className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-2xl font-semibold text-white mb-3">
                   {role.title}
                 </h3>
-                <p className="text-slate-400 mb-6">
-                  {role.description}
-                </p>
+                <p className="text-slate-400 mb-6">{role.description}</p>
                 <div className="flex items-center gap-2 text-primary-400 font-medium group-hover:gap-4 transition-all">
                   Enter Portal
                   <ChevronRight className="w-5 h-5" />
@@ -637,7 +722,7 @@ export default function LandingPage() {
                 className="btn-primary flex items-center gap-2 mx-auto"
               >
                 <Wallet className="w-5 h-5" />
-                {isLoading ? 'Connecting...' : 'Connect Wallet'}
+                {isLoading ? "Connecting..." : "Connect Wallet"}
               </button>
             </div>
           )}
@@ -655,9 +740,15 @@ export default function LandingPage() {
               <span className="font-bold text-xl text-white">VitalChain</span>
             </div>
             <div className="flex items-center gap-6 text-slate-400 text-sm">
-              <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-white transition-colors">Documentation</a>
+              <a href="#" className="hover:text-white transition-colors">
+                Privacy Policy
+              </a>
+              <a href="#" className="hover:text-white transition-colors">
+                Terms of Service
+              </a>
+              <a href="#" className="hover:text-white transition-colors">
+                Documentation
+              </a>
             </div>
             <p className="text-slate-500 text-sm">
               © 2026 VitalChain. All rights reserved.
@@ -666,5 +757,5 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }

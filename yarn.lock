@@ -6280,10 +6280,15 @@ victory-vendor@^36.6.8:
     d3-time "^3.0.0"
     d3-timer "^3.0.1"
 
-"VitalChain-frontend@file:/home/ashton/rubix/frontend":
+"VitalChain-blockchain@file:/home/ashton/coding/Proctive/blockchain":
+  version "1.0.0"
+  resolved "file:blockchain"
+
+"VitalChain-frontend@file:/home/ashton/coding/Proctive/frontend":
   version "1.0.0"
   resolved "file:frontend"
   dependencies:
+    "@react-google-maps/api" "^2.20.8"
     "@supabase/ssr" "^0.8.0"
     "@supabase/supabase-js" "^2.90.1"
     axios "^1.13.2"
@@ -6299,6 +6304,7 @@ victory-vendor@^36.6.8:
     react-dom "^18.2.0"
     react-dropzone "^14.2.3"
     react-hot-toast "^2.4.1"
+    react-leaflet "^4.2.1"
     react-router "^6.30.3"
     react-router-dom "^6.20.0"
     recharts "^2.10.3"
