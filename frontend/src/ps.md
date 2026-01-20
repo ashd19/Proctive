@@ -58,12 +58,6 @@ access metadata on the blockchain.
 Emergency Access Protocol: This feature allows authorized
 doctors to bypass standard consent in life-threatening
 situations, with all such events flagged for later audit. 
-Emergency Access Protocol:
-  
-This feature allows authorized
-doctors to bypass standard consent in life-threatening
-situations, with all such events flagged for later audit.
- 
-Insurance Claim Automation:  This module shares verified
-treatment data with insurance providers to speed up the claim
-settlement process through smart contracts . 
+This document has been moved to `/mds/ps.md`.
+
+Please see [mds/ps.md](mds/ps.md) for the full content.

@@ -25,6 +25,7 @@ import {
 import { useWalletStore } from "../store/walletStore";
 import { UserRole } from "../types";
 import { toast } from "react-hot-toast";
+import AssistantChat from "./AssistantChat";
 
 interface LayoutProps {
   role: UserRole;
@@ -116,12 +117,15 @@ export default function Layout({ role, children }: LayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen  bg-slate-50">
+      {/* Persistent in-app assistant (bottom-left, above sidebar) */}
+      <AssistantChat />
+
       {/* Sidebar */}
       <motion.aside
         initial={false}
         animate={{ width: isSidebarOpen ? 280 : 80 }}
-        className="fixed left-0 top-0 h-full bg-white border-r border-slate-200 z-40 shadow-sm"
+        className="fixed  mt-[65px] left-0 top-0 h-full bg-white border-r border-slate-200 z-40 shadow-sm"
       >
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100">
