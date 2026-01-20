@@ -1,29 +1,29 @@
-import { Contract } from 'ethers'
+import { Contract } from "ethers";
 
 export enum AccessType {
   VIEW = 0,
   DOWNLOAD = 1,
   UPDATE = 2,
   SHARE = 3,
-  EMERGENCY = 4
+  EMERGENCY = 4,
 }
 
 export interface AuditLogEntry {
-  id: number
-  patient: string
-  accessor: string
-  recordId: number
-  accessType: AccessType
-  timestamp: number
-  ipAddress: string
-  purpose: string
-  wasEmergency: boolean
+  id: number;
+  patient: string;
+  accessor: string;
+  recordId: number;
+  accessType: AccessType;
+  timestamp: number;
+  ipAddress: string;
+  purpose: string;
+  wasEmergency: boolean;
 }
 
 export class AuditLogService {
   constructor(
     private auditLogContract: Contract,
-    private _userAddress: string
+    private _userAddress: string,
   ) {}
 
   // Log an access event
@@ -31,21 +31,27 @@ export class AuditLogService {
     patientAddress: string,
     recordId: number,
     accessType: AccessType,
-    ipAddress: string,
-    purpose: string
+    accessorName: string,
+    accessorRole: string,
+    institutionName: string,
+    ipAddressHash: string,
+    deviceInfoHash: string,
   ): Promise<void> {
     try {
       const tx = await this.auditLogContract.logAccess(
         patientAddress,
         recordId,
         accessType,
-        ipAddress,
-        purpose
-      )
-      await tx.wait()
+        accessorName,
+        accessorRole,
+        institutionName,
+        ipAddressHash,
+        deviceInfoHash,
+      );
+      await tx.wait();
     } catch (error: any) {
-      console.error('Error logging access:', error)
-      throw new Error(error.message || 'Failed to log access')
+      console.error("Error logging access:", error);
+      throw new Error(error.message || "Failed to log access");
     }
   }
 
@@ -53,26 +59,26 @@ export class AuditLogService {
   async logEmergencyAccess(
     patientAddress: string,
     recordId: number,
-    purpose: string
+    purpose: string,
   ): Promise<void> {
     try {
       const tx = await this.auditLogContract.logEmergencyAccess(
         patientAddress,
         recordId,
-        purpose
-      )
-      await tx.wait()
+        purpose,
+      );
+      await tx.wait();
     } catch (error: any) {
-      console.error('Error logging emergency access:', error)
-      throw new Error(error.message || 'Failed to log emergency access')
+      console.error("Error logging emergency access:", error);
+      throw new Error(error.message || "Failed to log emergency access");
     }
   }
 
   // Get patient's audit logs
   async getPatientLogs(patientAddress: string): Promise<AuditLogEntry[]> {
     try {
-      const logs = await this.auditLogContract.getPatientLogs(patientAddress)
-      
+      const logs = await this.auditLogContract.getPatientLogs(patientAddress);
+
       return logs.map((log: any) => ({
         id: Number(log.id),
         patient: log.patient,
@@ -82,19 +88,19 @@ export class AuditLogService {
         timestamp: Number(log.timestamp),
         ipAddress: log.ipAddress,
         purpose: log.purpose,
-        wasEmergency: log.wasEmergency
-      }))
+        wasEmergency: log.wasEmergency,
+      }));
     } catch (error: any) {
-      console.error('Error fetching patient logs:', error)
-      return []
+      console.error("Error fetching patient logs:", error);
+      return [];
     }
   }
 
   // Get logs for a specific record
   async getRecordLogs(recordId: number): Promise<AuditLogEntry[]> {
     try {
-      const logs = await this.auditLogContract.getRecordLogs(recordId)
-      
+      const logs = await this.auditLogContract.getRecordLogs(recordId);
+
       return logs.map((log: any) => ({
         id: Number(log.id),
         patient: log.patient,
@@ -104,19 +110,19 @@ export class AuditLogService {
         timestamp: Number(log.timestamp),
         ipAddress: log.ipAddress,
         purpose: log.purpose,
-        wasEmergency: log.wasEmergency
-      }))
+        wasEmergency: log.wasEmergency,
+      }));
     } catch (error: any) {
-      console.error('Error fetching record logs:', error)
-      return []
+      console.error("Error fetching record logs:", error);
+      return [];
     }
   }
 
   // Get logs by accessor
   async getAccessorLogs(accessorAddress: string): Promise<AuditLogEntry[]> {
     try {
-      const logs = await this.auditLogContract.getAccessorLogs(accessorAddress)
-      
+      const logs = await this.auditLogContract.getAccessorLogs(accessorAddress);
+
       return logs.map((log: any) => ({
         id: Number(log.id),
         patient: log.patient,
@@ -126,19 +132,23 @@ export class AuditLogService {
         timestamp: Number(log.timestamp),
         ipAddress: log.ipAddress,
         purpose: log.purpose,
-        wasEmergency: log.wasEmergency
-      }))
+        wasEmergency: log.wasEmergency,
+      }));
     } catch (error: any) {
-      console.error('Error fetching accessor logs:', error)
-      return []
+      console.error("Error fetching accessor logs:", error);
+      return [];
     }
   }
 
   // Get emergency access logs for patient
-  async getPatientEmergencyLogs(patientAddress: string): Promise<AuditLogEntry[]> {
+  async getPatientEmergencyLogs(
+    patientAddress: string,
+  ): Promise<AuditLogEntry[]> {
     try {
-      const logs = await this.auditLogContract.getPatientEmergencyLogs(patientAddress)
-      
+      const logs = await this.auditLogContract.getPatientEmergencyLogs(
+        patientAddress,
+      );
+
       return logs.map((log: any) => ({
         id: Number(log.id),
         patient: log.patient,
@@ -148,21 +158,23 @@ export class AuditLogService {
         timestamp: Number(log.timestamp),
         ipAddress: log.ipAddress,
         purpose: log.purpose,
-        wasEmergency: log.wasEmergency
-      }))
+        wasEmergency: log.wasEmergency,
+      }));
     } catch (error: any) {
-      console.error('Error fetching emergency logs:', error)
-      return []
+      console.error("Error fetching emergency logs:", error);
+      return [];
     }
   }
 
   // Get total access count for patient
   async getPatientAccessCount(patientAddress: string): Promise<number> {
     try {
-      return Number(await this.auditLogContract.getPatientAccessCount(patientAddress))
+      return Number(
+        await this.auditLogContract.getPatientAccessCount(patientAddress),
+      );
     } catch (error: any) {
-      console.error('Error fetching access count:', error)
-      return 0
+      console.error("Error fetching access count:", error);
+      return 0;
     }
   }
 
@@ -170,17 +182,17 @@ export class AuditLogService {
   static getAccessTypeName(type: AccessType): string {
     switch (type) {
       case AccessType.VIEW:
-        return 'View'
+        return "View";
       case AccessType.DOWNLOAD:
-        return 'Download'
+        return "Download";
       case AccessType.UPDATE:
-        return 'Update'
+        return "Update";
       case AccessType.SHARE:
-        return 'Share'
+        return "Share";
       case AccessType.EMERGENCY:
-        return 'Emergency Access'
+        return "Emergency Access";
       default:
-        return 'Unknown'
+        return "Unknown";
     }
   }
 }

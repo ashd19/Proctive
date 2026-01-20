@@ -6,7 +6,7 @@
   * {
     @apply border-slate-200;
   }
-  
+
   body {
     @apply bg-slate-50 text-slate-900 antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -70,6 +70,14 @@
   }
 }
 
+
+.inter-bold {
+  font-family: "Inter", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 800;
+  font-style: normal;
+}
+
 @layer components {
   .glass-card {
     @apply bg-white/80 backdrop-blur-xl border border-white/20 shadow-glass;
@@ -126,6 +134,8 @@
     @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
   }
 
+
+
   .gradient-text {
     @apply bg-gradient-to-r from-primary-600 via-medical-500 to-primary-600 
            bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient;
@@ -156,6 +166,9 @@
            hover:text-primary-600 after:absolute after:bottom-0 after:left-0 
            after:h-0.5 after:w-0 after:bg-primary-600 after:transition-all
            hover:after:w-full;
+  }
+  .nav-anim {
+    @apply hover:scale-90 transition-transform duration-300 ease-in hover:opacity-90;
   }
 
   .nav-link-active {

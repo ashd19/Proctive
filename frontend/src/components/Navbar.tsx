@@ -53,20 +53,22 @@ export default function Navbar({ otherThanLanding }: { otherThanLanding?: boolea
 
 
     return (
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100">
+        <nav className="fixed top-0 left-0 right-0 z-50 bg backdrop-blur-md shadow-md py-1">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
-                    <Link to="/" className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-medical-500 flex items-center justify-center shadow-lg shadow-primary-500/20">
-                            <Activity className="w-5 h-5 text-white" />
-                        </div>
-                        <span className="font-bold text-xl gradient-text">VitalChain</span>
-                    </Link>
+                  
+                        <Link to="/" className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-medical-500 flex items-center justify-center shadow-lg shadow-primary-500/20">
+                                <Activity className="w-5 h-5 text-white" />
+                            </div>
+                            <span className="font-bold text-2xl text-blue-800 inter-bold tracking-wider">VitalChain</span>
+                        </Link>
+                   
 
-                    <div className="hidden md:flex items-center gap-8">
-                        <a href={`${otherThanLanding ? "/" : "#features"}`} className="nav-link">Features</a>
-                        <a href={`${otherThanLanding ? "/" : "#how-it-works"}`} className="nav-link">How It Works</a>
-                        <a href={`${otherThanLanding ? "/" : "#portals"}`} className="nav-link">Portals</a>
+                    <div className="hidden md:flex items-center gap-8 font-medium tracking-wide text-lg    ">
+                        <a href={`${otherThanLanding ? "/" : "#features"}`} className="nav-anim">Features</a>
+                        <a href={`${otherThanLanding ? "/" : "#how-it-works"}`} className="nav-anim">How It Works</a>
+                        <a href={`${otherThanLanding ? "/" : "#portals"}`} className="nav-anim">Portals</a>
                     </div>
 
                     <div className="flex items-center gap-4">
