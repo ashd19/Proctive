@@ -101,12 +101,20 @@ export class PatientRecordsService {
   // Get all records for a patient
   async getPatientRecords(patientAddress: string): Promise<MedicalRecord[]> {
     try {
+      console.log("Fetching records for patient:", patientAddress);
       const recordIds = await this.patientRecordsContract.getPatientRecordIds(
         patientAddress,
       );
+      console.log("Record IDs found:", recordIds);
+
+      if (!recordIds || recordIds.length === 0) {
+        console.log("No record IDs found for patient");
+        return [];
+      }
 
       const records = await Promise.all(
         recordIds.map(async (id: bigint) => {
+          console.log("Fetching record:", Number(id));
           const record = await this.patientRecordsContract.getRecord(
             Number(id),
           );
@@ -136,7 +144,9 @@ export class PatientRecordsService {
         }),
       );
 
-      return records.filter((r) => r.isActive);
+      const activeRecords = records.filter((r) => r.isActive);
+      console.log("Active records found:", activeRecords.length);
+      return activeRecords;
     } catch (error: any) {
       console.error("Error fetching patient records:", error);
       throw new Error(error.message || "Failed to fetch patient records");
@@ -180,18 +190,30 @@ export class PatientRecordsService {
   // Decrypt and retrieve record data from IPFS
   async getRecordData(record: MedicalRecord): Promise<any> {
     try {
-      // For patients, they can decrypt with their address as private key (demo)
-      // In production, use actual key management
+      // Use patient's address as decryption key (for demo purposes)
+      // In production, this would use a proper key management system
+      // where the patient re-encrypts keys for authorized doctors
+      const decryptionKey = record.patient; // Patient's address
+
+      console.log("📥 Retrieving record data from IPFS...");
+      console.log("Patient:", record.patient);
+      console.log("IPFS Hash:", record.ipfsHash);
+      console.log("Current user:", this.userAddress);
+
       const data = await ipfsService.retrieveRecord(
         record.ipfsHash,
         record.encryptedKey,
-        this.userAddress,
+        decryptionKey, // Use patient's address instead of doctor's
       );
+
+      if (!data) {
+        throw new Error("Failed to decrypt record data");
+      }
 
       return data;
     } catch (error: any) {
       console.error("Error retrieving record data:", error);
-      throw new Error("Failed to decrypt record data");
+      throw new Error(error.message || "Failed to decrypt record data");
     }
   }
 

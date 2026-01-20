@@ -211,7 +211,7 @@ export default function DoctorPatients() {
         )}
 
         {/* Patient Records Modal */}
-        {selectedPatient && patientRecords.length > 0 && (
+        {selectedPatient && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -238,41 +238,57 @@ export default function DoctorPatients() {
                 </button>
               </div>
 
-              <div className="space-y-4">
-                {patientRecords.map((record) => (
-                  <div
-                    key={record.id}
-                    className="bg-slate-50 rounded-lg p-4 hover:bg-slate-100 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-slate-900 mb-1">
-                          {record.metadata.title}
-                        </h3>
-                        <p className="text-sm text-slate-600 mb-2">
-                          {record.metadata.description}
-                        </p>
-                        <div className="flex items-center gap-4 text-xs text-slate-500">
-                          <span>Type: {record.metadata.recordType}</span>
-                          <span>•</span>
-                          <span>
-                            {new Date(
-                              record.createdAt * 1000,
-                            ).toLocaleDateString()}
-                          </span>
+              {loadingRecords ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader className="w-8 h-8 animate-spin text-primary-600" />
+                </div>
+              ) : patientRecords.length === 0 ? (
+                <div className="text-center py-12">
+                  <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                    No records found
+                  </h3>
+                  <p className="text-slate-600">
+                    This patient hasn't uploaded any medical records yet.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {patientRecords.map((record) => (
+                    <div
+                      key={record.id}
+                      className="bg-slate-50 rounded-lg p-4 hover:bg-slate-100 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-slate-900 mb-1">
+                            {record.metadata.title}
+                          </h3>
+                          <p className="text-sm text-slate-600 mb-2">
+                            {record.metadata.description}
+                          </p>
+                          <div className="flex items-center gap-4 text-xs text-slate-500">
+                            <span>Type: {record.metadata.recordType}</span>
+                            <span>•</span>
+                            <span>
+                              {new Date(
+                                record.createdAt * 1000,
+                              ).toLocaleDateString()}
+                            </span>
+                          </div>
                         </div>
+                        <button
+                          onClick={() => handleViewRecord(record)}
+                          className="btn-secondary flex items-center gap-2"
+                        >
+                          <FileText className="w-4 h-4" />
+                          View
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleViewRecord(record)}
-                        className="btn-secondary flex items-center gap-2"
-                      >
-                        <FileText className="w-4 h-4" />
-                        View
-                      </button>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </motion.div>
           </div>
         )}

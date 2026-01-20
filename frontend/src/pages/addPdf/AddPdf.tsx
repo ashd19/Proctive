@@ -93,7 +93,7 @@ export default function AddPdf() {
 
     setUploading(true);
     try {
-      // Step 0: Request MetaMask signature
+      // Step 1: Request MetaMask signature
       toast.loading("Please sign the transaction in MetaMask...", {
         id: "upload",
       });
@@ -109,7 +109,7 @@ export default function AddPdf() {
         params: [message, address],
       });
 
-      // Step 1: Convert PDF to JSON using backend
+      // Step 2: Convert PDF to JSON using backend
       toast.loading("Converting PDF to structured data...", { id: "upload" });
       const formData2 = new FormData();
       formData2.append("file", file);
@@ -126,51 +126,38 @@ export default function AddPdf() {
       const pdfData = await response.json();
       console.log("PDF converted to JSON:", pdfData);
 
-      // Step 2: Upload original PDF to IPFS (so it can be retrieved later)
-      toast.loading("Uploading original PDF to IPFS...", { id: "upload" });
-      const pdfCid = await services.ipfs.uploadToIPFS(file);
-
-      // Step 3: Upload JSON to IPFS (include pdfCid in metadata)
-      toast.loading("Uploading JSON to IPFS...", { id: "upload" });
-      const jsonWithMetadata = {
-        ...pdfData,
-        metadata: {
-          title: formData.title,
-          recordType: formData.recordType,
-          description: formData.description,
-          fileName: file.name,
-          fileSize: file.size,
-          uploadedAt: new Date().toISOString(),
-          uploadedBy: address,
-          group: "patient",
-          patientAddress: address,
-          pdfCid,
-          pdfUrl: `https://gateway.pinata.cloud/ipfs/${pdfCid}`,
-          signature: signature,
-          signedMessage: message,
-        },
+      // Step 3: Create blockchain record (this handles IPFS upload internally)
+      toast.loading("Creating blockchain record with IPFS...", {
+        id: "upload",
+      });
+      const recordData = {
+        patientId: address,
+        recordType: 0, // General record type
+        title: formData.title,
+        description: formData.description || "PDF Medical Record",
+        hospitalName: "Patient Upload",
+        doctorName: "Self",
+        diagnosis: pdfData.diagnosis,
+        treatment: pdfData.treatment,
+        medications: pdfData.medications,
+        notes: pdfData.notes || JSON.stringify(pdfData, null, 2),
+        tags: [formData.recordType, "PDF", "Patient Upload"],
       };
 
-      const safeTitle = formData.title
-        ? formData.title
-            .replace(/\s+/g, "_")
-            .replace(/[^a-zA-Z0-9_-]/g, "")
-            .slice(0, 50)
-        : `record-${Date.now()}`;
-      const jsonFileName = `${safeTitle}.json`;
-      const hash = await services.ipfs.uploadJSON(
-        jsonWithMetadata,
-        jsonFileName,
+      const recordId = await services.patientRecords.createRecord(
+        address,
+        recordData,
       );
-      setIpfsHash(hash);
+      console.log("Blockchain record created with ID:", recordId);
+      setIpfsHash(recordId.toString()); // Store record ID instead of IPFS hash
 
       // Step 4: Log to audit trail
       toast.loading("Recording in audit log...", { id: "upload" });
       if (services.auditLog) {
         await services.auditLog.logAccess(
           address,
-          0,
-          3,
+          recordId,
+          3, // UPLOAD
           "Patient",
           "patient",
           "Direct Upload",
@@ -180,7 +167,7 @@ export default function AddPdf() {
       }
 
       // Step 5: Success
-      toast.success(`✓ Signed & uploaded to IPFS! Hash: ${hash}`, {
+      toast.success(`✓ Record created on blockchain! ID: ${recordId}`, {
         id: "upload",
         duration: 3000,
       });
