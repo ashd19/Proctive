@@ -221,7 +221,7 @@ export default function XrayVisualizerPage() {
   const [selectedRoiId, setSelectedRoiId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('clinical');
   // NEW: Track AI source and raw detections
-  const [aiSource, setAiSource] = useState<'huggingface' | 'demo' | null>(null);
+  const [aiSource, setAiSource] = useState<'huggingface' | 'demo' | 'local_torchxrayvision' | null>(null);
   const [rawLabels, setRawLabels] = useState<string[]>([]);
 
   const selectedRoi = detectedRois.find(r => r.id === selectedRoiId) || null;
@@ -410,16 +410,22 @@ export default function XrayVisualizerPage() {
           <div className="bg-slate-950 border-t border-slate-800 p-4 text-slate-500 text-xs flex justify-between items-center">
             <span className="flex items-center gap-2">
               {appState === 'results' && aiSource === 'huggingface' && (
-                <>
-                  <Zap size={14} className="text-green-400" />
-                  <span className="text-green-400 font-medium">Hugging Face AI</span>
-                </>
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-green-500/10 text-green-400 rounded-full border border-green-500/20">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-xs font-medium">Hugging Face AI</span>
+                </div>
+              )}
+              {appState === 'results' && aiSource === 'local_torchxrayvision' && (
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full border border-blue-500/20">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                  <span className="text-xs font-medium">Model</span>
+                </div>
               )}
               {appState === 'results' && aiSource === 'demo' && (
-                <>
-                  <AlertCircle size={14} className="text-amber-400" />
-                  <span className="text-amber-400 font-medium">Demo Mode</span>
-                </>
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-400 rounded-full border border-amber-500/20">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  <span className="text-xs font-medium">Demo Mode</span>
+                </div>
               )}
               {appState !== 'results' && 'Awaiting image upload'}
               {appState === 'results' && ` • ${detectedRois.length} findings`}

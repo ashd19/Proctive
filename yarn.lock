@@ -6280,11 +6280,11 @@ victory-vendor@^36.6.8:
     d3-time "^3.0.0"
     d3-timer "^3.0.1"
 
-"VitalChain-blockchain@file:/home/ashton/coding/Proctive/blockchain":
+"VitalChain-blockchain@file:C:\\Users\\Acer\\Project\\VitalChain\\Proctive2\\Proctive\\blockchain":
   version "1.0.0"
   resolved "file:blockchain"
 
-"VitalChain-frontend@file:/home/ashton/coding/Proctive/frontend":
+"VitalChain-frontend@file:C:\\Users\\Acer\\Project\\VitalChain\\Proctive2\\Proctive\\frontend":
   version "1.0.0"
   resolved "file:frontend"
   dependencies:

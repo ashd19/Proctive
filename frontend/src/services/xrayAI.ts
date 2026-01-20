@@ -125,7 +125,7 @@ export interface AIDetection {
 // Result with source indicator
 export interface AnalysisResult {
   detections: AIDetection[];
-  source: 'huggingface' | 'demo';
+  source: 'huggingface' | 'demo' | 'local_torchxrayvision';
   rawLabels?: string[]; // What the AI actually detected
 }
 
@@ -149,53 +149,124 @@ async function urlToBlob(url: string): Promise<Blob> {
   return response.blob();
 }
 
+// Call Local Python Backend
+async function classifyImageLocal(imageBlob: Blob): Promise<AnalysisResult> {
+  const formData = new FormData();
+  formData.append('file', imageBlob);
+
+  try {
+      // Short timeout for local check (2s) so we don't hang if it's off
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+      const response = await fetch('http://localhost:8000/analyze', {
+          method: 'POST',
+          body: formData,
+          signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+          throw new Error(`Local backend error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('[XrayAI] Local Backend Success:', data);
+
+      // Map backend predictions dictionary to our format
+      // Backend returns { predictions: { "Pneumonia": 0.85, ... }, localization: { x: 45, y: 50 } }
+      const classifications = Object.entries(data.predictions).map(([label, score]) => ({
+          label,
+          score: Number(score)
+      }));
+      
+      const localization = data.localization; // {x: number, y: number}
+
+      // Reuse the existing mapping logic but return the formatted result directly
+      // Need to replicate the logic from analyzeXray slightly or helper function
+      // But classifyImage returns array. 
+      // Let's make this function return the ARRAY of classifications like classifyImage
+      return {
+          detections: [], // Placeholder, will fill outside
+          source: 'local_torchxrayvision',
+          rawLabels: classifications.map(c => `${c.label} (${(c.score * 100).toFixed(1)}%)`),
+          localization: localization
+      } as any; 
+  } catch (error) {
+      console.log('[XrayAI] Local backend unavailable, falling back...');
+      throw error;
+  }
+}
+
+
 // Call Hugging Face API for image classification
 // Note: HF API may fail due to CORS in browser environments
 // Falls back to intelligent image-based detection
-async function classifyImage(imageBlob: Blob): Promise<Array<{ label: string; score: number }>> {
+async function classifyImage(imageBlob: Blob): Promise<{ source: string, classifications: Array<{ label: string; score: number }> }> {
   console.log('[XrayAI] Starting classification with blob size:', imageBlob.size);
   
-  if (!HF_API_KEY) {
-    console.warn('[XrayAI] No API key found, using image analysis');
-    return analyzeImageProperties(imageBlob);
-  }
-
+  // 1. Try Local Backend
   try {
-    console.log('[XrayAI] Attempting Hugging Face API call...');
+    const formData = new FormData();
+    formData.append('file', imageBlob);
     
+    // Quick check logic
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
-    
-    const response = await fetch(`${HF_API_BASE}/${MODELS.imageClassifier}`, {
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s wait for local - ML can be slow on CPU
+
+    const response = await fetch('http://127.0.0.1:8000/analyze', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${HF_API_KEY}`,
-      },
-      body: imageBlob,
-      signal: controller.signal,
+      body: formData,
+      signal: controller.signal
     });
-    
     clearTimeout(timeoutId);
-    console.log('[XrayAI] Response status:', response.status);
 
     if (response.ok) {
-      const data = await response.json();
-      console.log('[XrayAI] API Success! Results:', data);
-      if (Array.isArray(data) && data.length > 0) {
-        return data;
-      }
-    } else {
-      const errorText = await response.text();
-      console.error('[XrayAI] API Error:', response.status, errorText);
+        const data = await response.json();
+        console.log('[XrayAI] Local backend success');
+        const classifications = Object.entries(data.predictions).map(([label, score]) => ({
+            label, 
+            score: Number(score)
+        }));
+        return { source: 'local_torchxrayvision', classifications };
     }
-    
-    // API failed, fall back to image analysis
-    return analyzeImageProperties(imageBlob);
-    
-  } catch (error) {
-    console.error('[XrayAI] API call failed:', error);
-    return analyzeImageProperties(imageBlob);
+  } catch (e) {
+      console.log('[XrayAI] Local backend skipped:', e);
   }
+
+  // 2. Try Hugging Face
+  if (HF_API_KEY) {
+    try {
+      console.log('[XrayAI] Attempting Hugging Face API call...');
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+      
+      const response = await fetch(`${HF_API_BASE}/${MODELS.imageClassifier}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${HF_API_KEY}`,
+        },
+        body: imageBlob,
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          return { source: 'huggingface', classifications: data };
+        }
+      }
+    } catch (error) {
+      console.error('[XrayAI] API call failed:', error);
+    }
+  }
+
+  // 3. Fallback to image analysis
+  const detections = await analyzeImageProperties(imageBlob);
+  return { source: 'demo', classifications: detections };
 }
 
 // Intelligent image property analyzer
@@ -350,7 +421,10 @@ export async function analyzeXray(imageSource: string | File): Promise<AnalysisR
     console.log('[XrayAI] Image blob ready, size:', imageBlob.size, 'type:', imageBlob.type);
 
     // Call the API with the blob
-    const classifications = await classifyImage(imageBlob);
+    const result = await classifyImage(imageBlob);
+    const classifications = result.classifications;
+    const source = result.source as 'huggingface' | 'demo' | 'local_torchxrayvision';
+    const localization = (result as any).localization; // Grab localization if available
     
     // Store raw labels for verification
     const rawLabels = classifications.map(c => `${c.label} (${(c.score * 100).toFixed(1)}%)`);
@@ -360,17 +434,39 @@ export async function analyzeXray(imageSource: string | File): Promise<AnalysisR
     const detections: AIDetection[] = [];
     const usedRegions = new Set<string>();
     
-    for (const classification of classifications.slice(0, 5)) {
-      const detection = mapToMedicalFinding(classification.label, classification.score);
-      if (detection) {
-        const regionKey = `${Math.round(detection.region.x / 20)}-${Math.round(detection.region.y / 20)}`;
-        if (!usedRegions.has(regionKey)) {
-          usedRegions.add(regionKey);
-          detections.push(detection);
+    // Logic: If we have real localization, force the TOP finding to use that specific location
+    // and label.
+    
+    // Sort classifications first by score to get top
+    const topClassifications = [...classifications].sort((a, b) => b.score - a.score);
+    
+    // Top 5 findings
+    for (let i = 0; i < Math.min(5, topClassifications.length); i++) {
+        const classification = topClassifications[i];
+        
+        // Use our mapping to get friendly text/severity
+        let detection = mapToMedicalFinding(classification.label, classification.score);
+        
+        if (detection) {
+            // SPECIAL HANDLING: If this is the #1 result and we have backend localization
+            if (i === 0 && localization && source === 'local_torchxrayvision') {
+                console.log(`[XrayAI] Applying precise localization for top finding: ${classification.label} at ${localization.x}, ${localization.y}`);
+                detection.region.x = localization.x;
+                detection.region.y = localization.y;
+                
+                // Also force high severity if score is high
+                if (classification.score > 0.5) detection.severity = 'high';
+            }
+            
+            // Avoid duplicate regions close to each other
+            const regionKey = `${Math.round(detection.region.x / 10)}-${Math.round(detection.region.y / 10)}`;
+            if (!usedRegions.has(regionKey)) {
+                usedRegions.add(regionKey);
+                detections.push(detection);
+            }
         }
-      }
     }
-
+    
     // Sort by severity and score
     const sortedDetections = detections.sort((a, b) => {
       const severityOrder = { high: 0, medium: 1, low: 2 };
@@ -382,7 +478,7 @@ export async function analyzeXray(imageSource: string | File): Promise<AnalysisR
 
     return {
       detections: sortedDetections,
-      source: 'huggingface',
+      source: source,
       rawLabels,
     };
   } catch (error) {
