@@ -323,11 +323,22 @@ class IPFSService {
   }> {
     const base64Content = await this.fileToBase64(file);
 
+    // Create a JSON wrapper with file metadata and content
+    const fileData = {
+      isFile: true,
+      fileName: file.name,
+      fileSize: file.size,
+      mimeType: file.type,
+      fileContent: base64Content, // Store base64 content in JSON
+    };
+
+    const jsonData = JSON.stringify(fileData);
+
     // Generate encryption key
     const encryptionKey = this.generateEncryptionKey();
 
-    // Encrypt the file content
-    const encryptedContent = this.encryptData(base64Content, encryptionKey);
+    // Encrypt the JSON (which contains the file)
+    const encryptedContent = this.encryptData(jsonData, encryptionKey);
 
     // Upload to IPFS
     const ipfsHash = await this.uploadToIPFS(encryptedContent);
