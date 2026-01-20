@@ -389,7 +389,7 @@ export default function LandingPage() {
       </div>
 
       {/* MetaMask Testing Section */}
-      {isConnected && (
+      {/* {isConnected && (
         <section className="py-12 bg-gradient-to-r from-primary-500 to-medical-500">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
@@ -436,127 +436,10 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
-      )}
+      )} */}
 
       {/* IPFS Testing Section */}
-      {isConnected && (
-        <section className="py-12 bg-slate-50">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-lg">
-              <div className="text-center mb-6">
-                <h3 className="text-2xl font-bold text-slate-900 mb-2 flex items-center justify-center gap-2">
-                  <Database className="w-6 h-6 text-purple-600" />
-                  IPFS Storage Demo
-                </h3>
-                <p className="text-slate-600">
-                  Test encrypted medical record storage on real IPFS via Pinata
-                </p>
-                <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">
-                  <CheckCircle className="w-4 h-4" />
-                  Connected to Pinata Cloud
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {/* Upload Medical Record */}
-                <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
-                  <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                    <Shield className="w-5 h-5 text-purple-600" />
-                    Upload Encrypted Medical Record
-                  </h4>
-                  <button
-                    onClick={handleTestIPFSUpload}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
-                  >
-                    <Database className="w-5 h-5" />
-                    Upload Sample Record to IPFS
-                  </button>
-                </div>
-
-                {/* Upload File */}
-                <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
-                  <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                    <Database className="w-5 h-5 text-blue-600" />
-                    Upload Encrypted File (Image/PDF/etc)
-                  </h4>
-                  <label className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer">
-                    <Database className="w-5 h-5" />
-                    Choose File to Upload
-                    <input
-                      type="file"
-                      onChange={handleTestIPFSFileUpload}
-                      className="hidden"
-                      accept="image/*,.pdf,.txt"
-                    />
-                  </label>
-                  {uploadedFile && (
-                    <p className="text-sm text-blue-600 mt-2 text-center">
-                      Selected: {uploadedFile.name}
-                    </p>
-                  )}
-                </div>
-
-                {/* Retrieve Data */}
-                {ipfsHash && (
-                  <div className="p-4 bg-green-50 rounded-xl border border-green-200">
-                    <h4 className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                      IPFS Hash Generated
-                    </h4>
-                    <p className="text-xs font-mono text-slate-600 mb-3 break-all bg-white p-2 rounded border border-green-200">
-                      {ipfsHash}
-                    </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={handleTestIPFSRetrieve}
-                        className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-3 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
-                      >
-                        <ArrowRight className="w-5 h-5" />
-                        Retrieve
-                      </button>
-                      <a
-                        href={`https://gateway.pinata.cloud/ipfs/${ipfsHash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-3 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
-                      >
-                        <Globe className="w-5 h-5" />
-                        View on IPFS
-                      </a>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-6 p-4 bg-slate-100 rounded-lg">
-                <p className="text-xs text-slate-600 space-y-1">
-                  <strong className="block text-slate-900">
-                    How it works:
-                  </strong>
-                  <span className="block">
-                    ✓ Data is encrypted with AES-256 before upload
-                  </span>
-                  <span className="block">
-                    ✓ Encryption key is secured for the patient only
-                  </span>
-                  <span className="block">
-                    ✓ Files uploaded to real IPFS via Pinata Cloud
-                  </span>
-                  <span className="block">
-                    ✓ IPFS hash is permanently stored on the network
-                  </span>
-                  <span className="block">
-                    ✓ Retrieve files from any IPFS gateway worldwide
-                  </span>
-                  <span className="block">
-                    ✓ Check browser console (F12) for detailed output
-                  </span>
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
+    
 
       {/* Features Section */}
       <section id="features" className="py-20 bg-slate-50">

@@ -36,6 +36,8 @@ const menuItems = {
     { path: "/patient", label: "Dashboard", icon: Home },
     { path: "/patient/records", label: "Medical Records", icon: FileText },
     { path: "/patient/addPdf", label: "Upload PDF", icon: Upload },
+    { path: "/patient/addimage", label: "Upload Image", icon: Upload },
+    { path: "/patient/convert", label: "Convert Medical Files", icon: Upload },
     { path: "/patient/access", label: "Access Control", icon: Shield },
     { path: "/patient/claims", label: "Insurance Claims", icon: Receipt },
     { path: "/patient/audit", label: "Audit Log", icon: ClipboardList },
