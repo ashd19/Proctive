@@ -1,89 +1,95 @@
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Users, Plus, Loader, Eye, FileText, Shield } from 'lucide-react'
-import toast from 'react-hot-toast'
-import { useServices } from '../../services/useServices'
-import { useWalletStore } from '../../store/walletStore'
-import { MedicalRecord } from '../../services/patientRecordsService'
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Users, Plus, Loader, Eye, FileText, Shield } from "lucide-react";
+import toast from "react-hot-toast";
+import { useServices } from "../../services/useServices";
+import { useWalletStore } from "../../store/walletStore";
+import { MedicalRecord } from "../../services/patientRecordsService";
 
 export default function DoctorPatients() {
-  const { services, loading: servicesLoading } = useServices()
-  const { address } = useWalletStore()
-  
-  const [accessiblePatients, setAccessiblePatients] = useState<string[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showRequestModal, setShowRequestModal] = useState(false)
-  const [selectedPatient, setSelectedPatient] = useState<string | null>(null)
-  const [patientRecords, setPatientRecords] = useState<MedicalRecord[]>([])
-  const [loadingRecords, setLoadingRecords] = useState(false)
+  const { services, loading: servicesLoading } = useServices();
+  const { address } = useWalletStore();
+
+  const [accessiblePatients, setAccessiblePatients] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<string | null>(null);
+  const [patientRecords, setPatientRecords] = useState<MedicalRecord[]>([]);
+  const [loadingRecords, setLoadingRecords] = useState(false);
 
   useEffect(() => {
     async function loadPatients() {
       if (!services.accessControl || !address) {
-        setLoading(false)
-        return
+        setLoading(false);
+        return;
       }
 
       try {
-        setLoading(true)
-        const patients = await services.accessControl.getRequesterAccessiblePatients(address)
-        setAccessiblePatients(patients)
+        setLoading(true);
+        const patients =
+          await services.accessControl.getRequesterAccessiblePatients(address);
+        setAccessiblePatients(patients);
       } catch (error: any) {
-        console.error('Error loading patients:', error)
-        toast.error(error.message || 'Failed to load patients')
+        console.error("Error loading patients:", error);
+        toast.error(error.message || "Failed to load patients");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
     if (!servicesLoading) {
-      loadPatients()
+      loadPatients();
     }
-  }, [services.accessControl, address, servicesLoading])
+  }, [services.accessControl, address, servicesLoading]);
 
   const handleViewRecords = async (patientAddress: string) => {
-    if (!services.patientRecords) return
+    if (!services.patientRecords) return;
 
     try {
-      setLoadingRecords(true)
-      setSelectedPatient(patientAddress)
-      const records = await services.patientRecords.getPatientRecords(patientAddress)
-      setPatientRecords(records)
+      setLoadingRecords(true);
+      setSelectedPatient(patientAddress);
+      const records = await services.patientRecords.getPatientRecords(
+        patientAddress,
+      );
+      setPatientRecords(records);
     } catch (error: any) {
-      console.error('Error loading records:', error)
-      toast.error(error.message || 'Failed to load patient records')
+      console.error("Error loading records:", error);
+      toast.error(error.message || "Failed to load patient records");
     } finally {
-      setLoadingRecords(false)
+      setLoadingRecords(false);
     }
-  }
+  };
 
   const handleViewRecord = async (record: MedicalRecord) => {
-    if (!services.patientRecords || !services.auditLog || !address) return
+    if (!services.patientRecords || !services.auditLog || !address) return;
 
     try {
-      toast.loading('Loading record...')
-      const data = await services.patientRecords.getRecordData(record)
-      
+      toast.loading("Loading record...");
+      const data = await services.patientRecords.getRecordData(record);
+
       // Log the access
       if (address) {
         await services.auditLog.logAccess(
           record.patient,
           record.id,
           0, // VIEW access type
-          '0.0.0.0',
-          'Viewing medical record'
-        )
+          "Doctor",
+          "doctor",
+          record.metadata.hospitalName || "Hospital",
+          "browser",
+          navigator.userAgent.substring(0, 50),
+        );
       }
 
-      toast.dismiss()
-      
+      toast.dismiss();
+
       // Display the record
-      const recordWindow = window.open('', '_blank')
+      const recordWindow = window.open("", "_blank");
       if (recordWindow) {
         recordWindow.document.write(`
           <html>
             <head>
-              <title>${data.title || 'Medical Record'}</title>
+              <title>${data.title || "Medical Record"}</title>
               <style>
                 body { font-family: system-ui; padding: 2rem; max-width: 800px; margin: 0 auto; }
                 h1 { color: #1e293b; }
@@ -92,30 +98,32 @@ export default function DoctorPatients() {
               </style>
             </head>
             <body>
-              <h1>${data.title || 'Medical Record'}</h1>
+              <h1>${data.title || "Medical Record"}</h1>
               <div class="metadata">
-                <strong>Type:</strong> ${data.type || 'N/A'}<br>
-                <strong>Date:</strong> ${data.date || 'N/A'}
+                <strong>Type:</strong> ${data.type || "N/A"}<br>
+                <strong>Date:</strong> ${data.date || "N/A"}
               </div>
-              <div class="content">${data.content || data.description || 'No content'}</div>
+              <div class="content">${
+                data.content || data.description || "No content"
+              }</div>
             </body>
           </html>
-        `)
+        `);
       }
 
-      toast.success('✓ Record accessed and logged')
+      toast.success("✓ Record accessed and logged");
     } catch (error: any) {
-      toast.dismiss()
-      toast.error(error.message || 'Failed to view record')
+      toast.dismiss();
+      toast.error(error.message || "Failed to view record");
     }
-  }
+  };
 
   if (servicesLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader className="w-8 h-8 animate-spin text-primary-600" />
       </div>
-    )
+    );
   }
 
   return (
@@ -123,7 +131,9 @@ export default function DoctorPatients() {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">My Patients</h1>
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">
+              My Patients
+            </h1>
             <p className="text-slate-600">Patients you have access to</p>
           </div>
           <button
@@ -138,8 +148,12 @@ export default function DoctorPatients() {
         {accessiblePatients.length === 0 ? (
           <div className="bg-white rounded-xl p-12 text-center shadow-sm border border-slate-200">
             <Users className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">No patients yet</h3>
-            <p className="text-slate-600 mb-6">Request access to a patient to get started</p>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">
+              No patients yet
+            </h3>
+            <p className="text-slate-600 mb-6">
+              Request access to a patient to get started
+            </p>
             <button
               onClick={() => setShowRequestModal(true)}
               className="btn-primary inline-flex items-center gap-2"
@@ -163,7 +177,9 @@ export default function DoctorPatients() {
                     <Users className="w-6 h-6 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-slate-900 mb-1">Patient</h3>
+                    <h3 className="font-semibold text-slate-900 mb-1">
+                      Patient
+                    </h3>
                     <p className="text-sm text-slate-600 font-mono">
                       {patientAddress.slice(0, 6)}...{patientAddress.slice(-4)}
                     </p>
@@ -173,7 +189,9 @@ export default function DoctorPatients() {
                 <button
                   onClick={() => handleViewRecords(patientAddress)}
                   className="w-full btn-primary flex items-center justify-center gap-2"
-                  disabled={loadingRecords && selectedPatient === patientAddress}
+                  disabled={
+                    loadingRecords && selectedPatient === patientAddress
+                  }
                 >
                   {loadingRecords && selectedPatient === patientAddress ? (
                     <>
@@ -202,15 +220,17 @@ export default function DoctorPatients() {
             >
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900">Patient Records</h2>
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    Patient Records
+                  </h2>
                   <p className="text-sm text-slate-600 font-mono">
                     {selectedPatient.slice(0, 10)}...{selectedPatient.slice(-8)}
                   </p>
                 </div>
                 <button
                   onClick={() => {
-                    setSelectedPatient(null)
-                    setPatientRecords([])
+                    setSelectedPatient(null);
+                    setPatientRecords([]);
                   }}
                   className="text-slate-400 hover:text-slate-600"
                 >
@@ -235,7 +255,11 @@ export default function DoctorPatients() {
                         <div className="flex items-center gap-4 text-xs text-slate-500">
                           <span>Type: {record.metadata.recordType}</span>
                           <span>•</span>
-                          <span>{new Date(record.createdAt * 1000).toLocaleDateString()}</span>
+                          <span>
+                            {new Date(
+                              record.createdAt * 1000,
+                            ).toLocaleDateString()}
+                          </span>
                         </div>
                       </div>
                       <button
@@ -259,56 +283,64 @@ export default function DoctorPatients() {
         isOpen={showRequestModal}
         onClose={() => setShowRequestModal(false)}
         onSuccess={() => {
-          setShowRequestModal(false)
+          setShowRequestModal(false);
           if (services.accessControl && address) {
-            services.accessControl.getRequesterAccessiblePatients(address).then(setAccessiblePatients)
+            services.accessControl
+              .getRequesterAccessiblePatients(address)
+              .then(setAccessiblePatients);
           }
         }}
         services={services}
-        doctorAddress={address || ''}
+        doctorAddress={address || ""}
       />
     </div>
-  )
+  );
 }
 
-function RequestConsentModal({ isOpen, onClose, onSuccess, services, doctorAddress }: any) {
-  const [requesting, setRequesting] = useState(false)
-  const [patientAddress, setPatientAddress] = useState('')
-  const [purpose, setPurpose] = useState('')
-  const [duration, setDuration] = useState('30')
+function RequestConsentModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  services,
+  doctorAddress,
+}: any) {
+  const [requesting, setRequesting] = useState(false);
+  const [patientAddress, setPatientAddress] = useState("");
+  const [purpose, setPurpose] = useState("");
+  const [duration, setDuration] = useState("30");
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!services.accessControl) {
-      toast.error('Services not initialized')
-      return
+      toast.error("Services not initialized");
+      return;
     }
 
     try {
-      setRequesting(true)
-      toast.loading('Requesting consent on blockchain...')
+      setRequesting(true);
+      toast.loading("Requesting consent on blockchain...");
 
-      const durationDays = parseInt(duration)
+      const durationDays = parseInt(duration);
       await services.accessControl.requestConsent(
         patientAddress,
         doctorAddress,
         purpose,
-        durationDays
-      )
+        durationDays,
+      );
 
-      toast.dismiss()
-      toast.success('✓ Consent request sent!')
-      onSuccess()
+      toast.dismiss();
+      toast.success("✓ Consent request sent!");
+      onSuccess();
     } catch (error: any) {
-      toast.dismiss()
-      toast.error(error.message || 'Failed to request consent')
+      toast.dismiss();
+      toast.error(error.message || "Failed to request consent");
     } finally {
-      setRequesting(false)
+      setRequesting(false);
     }
-  }
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -317,7 +349,9 @@ function RequestConsentModal({ isOpen, onClose, onSuccess, services, doctorAddre
         animate={{ opacity: 1, scale: 1 }}
         className="bg-white rounded-2xl max-w-lg w-full p-6"
       >
-        <h2 className="text-2xl font-bold text-slate-900 mb-6">Request Patient Consent</h2>
+        <h2 className="text-2xl font-bold text-slate-900 mb-6">
+          Request Patient Consent
+        </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -364,10 +398,19 @@ function RequestConsentModal({ isOpen, onClose, onSuccess, services, doctorAddre
           </div>
 
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 btn-secondary" disabled={requesting}>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 btn-secondary"
+              disabled={requesting}
+            >
               Cancel
             </button>
-            <button type="submit" className="flex-1 btn-primary flex items-center justify-center gap-2" disabled={requesting}>
+            <button
+              type="submit"
+              className="flex-1 btn-primary flex items-center justify-center gap-2"
+              disabled={requesting}
+            >
               {requesting ? (
                 <>
                   <Loader className="w-5 h-5 animate-spin" />
@@ -384,5 +427,5 @@ function RequestConsentModal({ isOpen, onClose, onSuccess, services, doctorAddre
         </form>
       </motion.div>
     </div>
-  )
+  );
 }

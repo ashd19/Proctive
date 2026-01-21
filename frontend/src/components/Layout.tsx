@@ -1,11 +1,11 @@
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Home, 
-  FileText, 
-  Shield, 
-  Receipt, 
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Home,
+  FileText,
+  Shield,
+  Receipt,
   ClipboardList,
   Users,
   AlertTriangle,
@@ -20,95 +20,98 @@ import {
   Copy,
   ExternalLink,
   Check,
-  Upload
-} from 'lucide-react'
-import { useWalletStore } from '../store/walletStore'
-import { UserRole } from '../types'
-import { toast } from 'react-hot-toast'
+  Upload,
+} from "lucide-react";
+import { useWalletStore } from "../store/walletStore";
+import { UserRole } from "../types";
+import { toast } from "react-hot-toast";
 
 interface LayoutProps {
-  role: UserRole
+  role: UserRole;
+  children?: React.ReactNode;
 }
 
 const menuItems = {
   patient: [
-    { path: '/patient', label: 'Dashboard', icon: Home },
-    { path: '/patient/records', label: 'Medical Records', icon: FileText },
-    { path: '/patient/addPdf', label: 'Upload PDF', icon: Upload },
-    { path: '/patient/access', label: 'Access Control', icon: Shield },
-    { path: '/patient/claims', label: 'Insurance Claims', icon: Receipt },
-    { path: '/patient/audit', label: 'Audit Log', icon: ClipboardList },
+    { path: "/patient", label: "Dashboard", icon: Home },
+    { path: "/patient/records", label: "Medical Records", icon: FileText },
+    { path: "/patient/addPdf", label: "Upload PDF", icon: Upload },
+    { path: "/patient/access", label: "Access Control", icon: Shield },
+    { path: "/patient/claims", label: "Insurance Claims", icon: Receipt },
+    { path: "/patient/audit", label: "Audit Log", icon: ClipboardList },
   ],
   doctor: [
-    { path: '/doctor', label: 'Dashboard', icon: Home },
-    { path: '/doctor/patients', label: 'Patient Records', icon: Users },
-    { path: '/doctor/emergency', label: 'Emergency Access', icon: AlertTriangle },
+    { path: "/doctor", label: "Dashboard", icon: Home },
+    { path: "/doctor/patients", label: "Patient Records", icon: Users },
+    {
+      path: "/doctor/emergency",
+      label: "Emergency Access",
+      icon: AlertTriangle,
+    },
   ],
   insurance: [
-    { path: '/insurance', label: 'Dashboard', icon: Home },
-    { path: '/insurance/claims', label: 'Claims Management', icon: Receipt },
+    { path: "/insurance", label: "Dashboard", icon: Home },
+    { path: "/insurance/claims", label: "Claims Management", icon: Receipt },
   ],
-  admin: [
-    { path: '/admin', label: 'Dashboard', icon: Home },
-  ],
+  admin: [{ path: "/admin", label: "Dashboard", icon: Home }],
   hospital: [],
   lab: [],
-}
+};
 
 const roleLabels = {
-  patient: 'Patient Portal',
-  doctor: 'Healthcare Provider',
-  insurance: 'Insurance Portal',
-  admin: 'Administration',
-  hospital: 'Hospital',
-  lab: 'Diagnostic Lab',
-}
+  patient: "Patient Portal",
+  doctor: "Healthcare Provider",
+  insurance: "Insurance Portal",
+  admin: "Administration",
+  hospital: "Hospital",
+  lab: "Diagnostic Lab",
+};
 
 const roleColors = {
-  patient: 'from-primary-500 to-primary-600',
-  doctor: 'from-medical-500 to-medical-600',
-  insurance: 'from-emerald-500 to-emerald-600',
-  admin: 'from-amber-500 to-amber-600',
-  hospital: 'from-purple-500 to-purple-600',
-  lab: 'from-pink-500 to-pink-600',
-}
+  patient: "from-primary-500 to-primary-600",
+  doctor: "from-medical-500 to-medical-600",
+  insurance: "from-emerald-500 to-emerald-600",
+  admin: "from-amber-500 to-amber-600",
+  hospital: "from-purple-500 to-purple-600",
+  lab: "from-pink-500 to-pink-600",
+};
 
-export default function Layout({ role }: LayoutProps) {
-  const location = useLocation()
-  const navigate = useNavigate()
-  const { address, disconnect } = useWalletStore()
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
-  const [isProfileOpen, setIsProfileOpen] = useState(false)
-  const [copied, setCopied] = useState(false)
+export default function Layout({ role, children }: LayoutProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { address, disconnect } = useWalletStore();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const items = menuItems[role] || []
+  const items = menuItems[role] || [];
 
   const handleDisconnect = () => {
-    disconnect()
-    navigate('/')
-  }
+    disconnect();
+    navigate("/");
+  };
 
   const formatAddress = (addr: string) => {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`
-  }
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
 
   const copyAddress = async () => {
-    if (!address) return
-    
+    if (!address) return;
+
     try {
-      await navigator.clipboard.writeText(address)
-      setCopied(true)
-      toast.success('Address copied to clipboard!')
-      setTimeout(() => setCopied(false), 2000)
+      await navigator.clipboard.writeText(address);
+      setCopied(true);
+      toast.success("Address copied to clipboard!");
+      setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      toast.error('Failed to copy address')
+      toast.error("Failed to copy address");
     }
-  }
+  };
 
   const openInMetaMask = () => {
-    if (!address) return
-    window.open(`https://metamask.app.link/send/${address}`, '_blank')
-  }
+    if (!address) return;
+    window.open(`https://metamask.app.link/send/${address}`, "_blank");
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -121,18 +124,22 @@ export default function Layout({ role }: LayoutProps) {
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-slate-100">
           <Link to="/" className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${roleColors[role]} flex items-center justify-center shadow-lg`}>
+            <div
+              className={`w-10 h-10 rounded-xl bg-gradient-to-br ${roleColors[role]} flex items-center justify-center shadow-lg`}
+            >
               <Activity className="w-5 h-5 text-white" />
             </div>
             <AnimatePresence>
               {isSidebarOpen && (
                 <motion.div
                   initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 'auto' }}
+                  animate={{ opacity: 1, width: "auto" }}
                   exit={{ opacity: 0, width: 0 }}
                   className="overflow-hidden"
                 >
-                  <span className="font-bold text-xl gradient-text">VitalChain</span>
+                  <span className="font-bold text-xl gradient-text">
+                    VitalChain
+                  </span>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -141,7 +148,11 @@ export default function Layout({ role }: LayoutProps) {
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
           >
-            {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {isSidebarOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
           </button>
         </div>
 
@@ -150,11 +161,13 @@ export default function Layout({ role }: LayoutProps) {
           {isSidebarOpen && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
+              animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               className="px-4 py-3"
             >
-              <div className={`bg-gradient-to-r ${roleColors[role]} rounded-xl p-3 text-white shadow-md`}>
+              <div
+                className={`bg-gradient-to-r ${roleColors[role]} rounded-xl p-3 text-white shadow-md`}
+              >
                 <p className="text-xs font-medium text-white/80">Portal</p>
                 <p className="font-semibold">{roleLabels[role]}</p>
               </div>
@@ -165,18 +178,19 @@ export default function Layout({ role }: LayoutProps) {
         {/* Navigation */}
         <nav className="px-3 py-4 space-y-1">
           {items.map((item) => {
-            const isActive = location.pathname === item.path
-            const Icon = item.icon
-            
+            const isActive = location.pathname === item.path;
+            const Icon = item.icon;
+
             return (
               <Link
                 key={item.path}
                 to={item.path}
                 className={`
                   flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200
-                  ${isActive 
-                    ? `bg-gradient-to-r ${roleColors[role]} text-white shadow-md` 
-                    : 'text-slate-600 hover:bg-slate-100'
+                  ${
+                    isActive
+                      ? `bg-gradient-to-r ${roleColors[role]} text-white shadow-md`
+                      : "text-slate-600 hover:bg-slate-100"
                   }
                 `}
               >
@@ -185,7 +199,7 @@ export default function Layout({ role }: LayoutProps) {
                   {isSidebarOpen && (
                     <motion.span
                       initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: 'auto' }}
+                      animate={{ opacity: 1, width: "auto" }}
                       exit={{ opacity: 0, width: 0 }}
                       className="font-medium overflow-hidden whitespace-nowrap"
                     >
@@ -194,7 +208,7 @@ export default function Layout({ role }: LayoutProps) {
                   )}
                 </AnimatePresence>
               </Link>
-            )
+            );
           })}
         </nav>
 
@@ -209,7 +223,7 @@ export default function Layout({ role }: LayoutProps) {
               {isSidebarOpen && (
                 <motion.span
                   initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 'auto' }}
+                  animate={{ opacity: 1, width: "auto" }}
                   exit={{ opacity: 0, width: 0 }}
                   className="font-medium overflow-hidden whitespace-nowrap"
                 >
@@ -222,7 +236,7 @@ export default function Layout({ role }: LayoutProps) {
       </motion.aside>
 
       {/* Main Content */}
-      <div 
+      <div
         className="transition-all duration-300"
         style={{ marginLeft: isSidebarOpen ? 280 : 80 }}
       >
@@ -231,7 +245,8 @@ export default function Layout({ role }: LayoutProps) {
           <div className="h-full px-6 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <h1 className="text-xl font-semibold text-slate-800">
-                {items.find(item => item.path === location.pathname)?.label || 'Dashboard'}
+                {items.find((item) => item.path === location.pathname)?.label ||
+                  "Dashboard"}
               </h1>
             </div>
 
@@ -253,7 +268,7 @@ export default function Layout({ role }: LayoutProps) {
                   </div>
                   <div className="text-left hidden sm:block">
                     <p className="text-sm font-medium text-slate-700">
-                      {address ? formatAddress(address) : 'Not Connected'}
+                      {address ? formatAddress(address) : "Not Connected"}
                     </p>
                     <p className="text-xs text-slate-500 capitalize">{role}</p>
                   </div>
@@ -269,10 +284,12 @@ export default function Layout({ role }: LayoutProps) {
                       className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50"
                     >
                       <div className="px-4 py-3 border-b border-slate-100">
-                        <p className="text-xs text-slate-500 mb-1">{roleLabels[role]}</p>
+                        <p className="text-xs text-slate-500 mb-1">
+                          {roleLabels[role]}
+                        </p>
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-sm font-mono text-slate-700">
-                            {address ? formatAddress(address) : 'Not Connected'}
+                            {address ? formatAddress(address) : "Not Connected"}
                           </p>
                           <button
                             onClick={copyAddress}
@@ -287,7 +304,7 @@ export default function Layout({ role }: LayoutProps) {
                           </button>
                         </div>
                       </div>
-                      
+
                       <button
                         onClick={openInMetaMask}
                         className="flex items-center gap-2 w-full px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
@@ -295,7 +312,7 @@ export default function Layout({ role }: LayoutProps) {
                         <ExternalLink className="w-4 h-4" />
                         Open in MetaMask
                       </button>
-                      
+
                       <Link
                         to="/"
                         className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
@@ -304,7 +321,7 @@ export default function Layout({ role }: LayoutProps) {
                         <Settings className="w-4 h-4" />
                         Switch Role
                       </Link>
-                      
+
                       <div className="border-t border-slate-100 mt-1 pt-1">
                         <button
                           onClick={handleDisconnect}
@@ -323,10 +340,8 @@ export default function Layout({ role }: LayoutProps) {
         </header>
 
         {/* Page Content */}
-        <main className="p-6">
-          <Outlet />
-        </main>
+        <main className="p-6">{children || <Outlet />}</main>
       </div>
     </div>
-  )
+  );
 }
