@@ -3,7 +3,7 @@ import { Session } from "@supabase/supabase-js";
 import { Activity, CheckCircle, LogOut, User, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useWalletStore } from '../store/walletStore'
 
 
@@ -12,6 +12,7 @@ export default function Navbar({ otherThanLanding }: { otherThanLanding?: boolea
     const [open, setOpen] = useState(false);
     const [session, setSession] = useState<Session | null>(null);
     const { connect, isConnected, isLoading } = useWalletStore();
+    const navigate = useNavigate();
 
     const handleConnect = async () => {
         try {
@@ -46,7 +47,8 @@ export default function Navbar({ otherThanLanding }: { otherThanLanding?: boolea
         if (error) {
             toast.error("Unable to logout");
         } else {
-            toast.success("Logged Out Successfully")
+            toast.success("Logged Out Successfully");
+            navigate('/');     
         }
     }
 

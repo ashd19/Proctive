@@ -20,6 +20,9 @@ import { supabase } from "./lib/supabaseClient"
 import Auth from "./pages/Auth/Auth"
 import LandingPage from "./pages/LandingPage"
 import HospitalsMap from "./components/HospitalsMap"
+import Doctor3DModel from "./pages/temp/DoctorSkel"
+import PatientHealthDashboard from "./pages/doctor/PatientHealthDashboard"
+import CBCVisualizer from "./pages/doctor/CbcReport"
 
 function App() {
   const { checkConnection } = useWalletStore()
@@ -70,6 +73,7 @@ function App() {
         <Route path="claims" element={<PatientClaims />} />
         <Route path="audit" element={<PatientAuditLog />} />
         <Route path="addPdf" element={<AddPdf />} />
+        <Route path="bloodSugarTrend" element={<PatientHealthDashboard/>}/>
       </Route>
 
       {/* Doctor Routes */}
@@ -83,6 +87,8 @@ function App() {
         <Route path="patients" element={<DoctorPatients />} />
         <Route path="emergency" element={<DoctorEmergency />} />
         <Route path="maps" element={<HospitalsMap />} />
+        <Route path="bloodSugarTrend" element={<PatientHealthDashboard/>}/>
+
       </Route>
 
       {/* Insurance Routes */}
