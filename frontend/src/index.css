@@ -149,6 +149,9 @@
   .nav-anim {
     @apply hover:scale-90 transition-transform duration-300 ease-in hover:opacity-90;
   }
+  .nav-anim {
+    @apply hover:scale-90 transition-transform duration-300 ease-in hover:opacity-90;
+  }
 
   .nav-link-active {
     @apply text-primary-600 after:w-full;

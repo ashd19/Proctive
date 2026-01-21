@@ -28,8 +28,12 @@ import PatientHealthDashboard from "./pages/doctor/PatientHealthDashboard";
 function App() {
   const { checkConnection } = useWalletStore();
   const [session, setSession] = useState<Session | null>(null);
+  const { checkConnection } = useWalletStore();
+  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
+    checkConnection();
+  }, [checkConnection]);
     checkConnection();
   }, [checkConnection]);
 
@@ -38,10 +42,25 @@ function App() {
       setSession(session);
     });
   }, []);
+      setSession(session);
+    });
+  }, []);
 
   const getRedirectPath = (session: Session) => {
     const role = session.user.user_metadata?.role;
+    const role = session.user.user_metadata?.role;
 
+    switch (role) {
+      case "doctor":
+        return "/doctor";
+      case "insurance":
+        return "/insurance";
+      case "admin":
+        return "/admin";
+      default:
+        return "/patient";
+    }
+  };
     switch (role) {
       case "doctor":
         return "/doctor";
@@ -69,6 +88,7 @@ function App() {
       {/* Patient Routes */}
       <Route
         path="/patient"
+        element={<ProtectedRoute requiredRole="patient" />}
         element={<ProtectedRoute requiredRole="patient" />}
       >
         <Route element={<Layout role="patient" />}>
@@ -104,7 +124,12 @@ function App() {
       <Route
         path="/insurance"
         element={<ProtectedRoute requiredRole="insurance" />}
+        element={<ProtectedRoute requiredRole="insurance" />}
       >
+        <Route element={<Layout role="insurance" />}>
+          <Route index element={<InsuranceDashboard />} />
+          <Route path="claims" element={<InsuranceClaimsPage />} />
+        </Route>
         <Route element={<Layout role="insurance" />}>
           <Route index element={<InsuranceDashboard />} />
           <Route path="claims" element={<InsuranceClaimsPage />} />
@@ -116,9 +141,15 @@ function App() {
         <Route element={<Layout role="admin" />}>
           <Route index element={<AdminDashboard />} />
         </Route>
+      <Route path="/admin" element={<ProtectedRoute requiredRole="admin" />}>
+        <Route element={<Layout role="admin" />}>
+          <Route index element={<AdminDashboard />} />
+        </Route>
       </Route>
     </Routes>
   );
+  );
 }
 
+export default App;
 export default App;
