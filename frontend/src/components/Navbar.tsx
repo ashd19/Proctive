@@ -3,7 +3,7 @@ import { Session } from "@supabase/supabase-js";
 import { Activity, CheckCircle, LogOut, User, Wallet, Brain, ShieldCheck, MapPin, ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useWalletStore } from '../store/walletStore'
 
 
@@ -12,6 +12,7 @@ export default function Navbar({ otherThanLanding }: { otherThanLanding?: boolea
     const [open, setOpen] = useState(false);
     const [session, setSession] = useState<Session | null>(null);
     const { connect, isConnected, isLoading } = useWalletStore();
+    const navigate = useNavigate();
 
     const handleConnect = async () => {
         try {
@@ -22,23 +23,24 @@ export default function Navbar({ otherThanLanding }: { otherThanLanding?: boolea
         }
     }
 
-    useEffect(() => {
-        // Get initial session
-        supabase.auth.getSession().then(({ data }) => {
-            setSession(data.session);
-        });
 
-        // Listen to auth changes (login/logout)
-        const { data: listener } = supabase.auth.onAuthStateChange(
-            (_event, session) => {
-                setSession(session);
-            }
-        );
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+    });
 
-        return () => {
-            listener.subscription.unsubscribe();
-        };
-    }, []);
+    // Listen to auth changes (login/logout)
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+      },
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
 
 
     const handleLogout = async () => {
@@ -46,27 +48,43 @@ export default function Navbar({ otherThanLanding }: { otherThanLanding?: boolea
         if (error) {
             toast.error("Unable to logout");
         } else {
-            toast.success("Logged Out Successfully")
+            toast.success("Logged Out Successfully");
+            navigate('/');     
         }
     }
 
+  return (
+    <nav className="fixed top-0 left-0 right-0 z-50 bg backdrop-blur-md shadow-md py-1">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          <Link to="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-medical-500 flex items-center justify-center shadow-lg shadow-primary-500/20">
+              <Activity className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-bold text-2xl text-blue-800 inter-bold tracking-wider">
+              VitalChain
+            </span>
+          </Link>
 
-
-    return (
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16">
-                    <Link to="/" className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-medical-500 flex items-center justify-center shadow-lg shadow-primary-500/20">
-                            <Activity className="w-5 h-5 text-white" />
-                        </div>
-                        <span className="font-bold text-xl gradient-text">VitalChain</span>
-                    </Link>
-
-                    <div className="hidden md:flex items-center gap-8">
-                        <a href={`${otherThanLanding ? "/" : "#features"}`} className="nav-link">Features</a>
-                        <a href={`${otherThanLanding ? "/" : "#how-it-works"}`} className="nav-link">How It Works</a>
-                        <a href={`${otherThanLanding ? "/" : "#portals"}`} className="nav-link">Portals</a>
+          <div className="hidden md:flex items-center gap-8 font-medium tracking-wide text-lg    ">
+            <a
+              href={`${otherThanLanding ? "/" : "#features"}`}
+              className="nav-anim"
+            >
+              Features
+            </a>
+            <a
+              href={`${otherThanLanding ? "/" : "#how-it-works"}`}
+              className="nav-anim"
+            >
+              How It Works
+            </a>
+            <a
+              href={`${otherThanLanding ? "/" : "#portals"}`}
+              className="nav-anim"
+            >
+              Portals
+            </a>
                         
                         {/* Smart Tools Dropdown */}
                         <div className="relative group">
@@ -111,67 +129,101 @@ export default function Navbar({ otherThanLanding }: { otherThanLanding?: boolea
                                 </div>
                             </div>
                         </div>
-                    </div>
+          </div>
 
-                    <div className="flex items-center gap-4">
-                        {/* 1️⃣ NO SESSION → Login & Signup */}
-                        {!session && (
-                            <>
-                                <Link to="/auth" className="btn-secondary">
-                                    Login
-                                </Link>
-                                <Link to="/auth" className="btn-primary">
-                                    Sign Up
-                                </Link>
-                            </>
-                        )}
+          <div className="flex items-center gap-4">
+            {/* 1️⃣ NO SESSION → Login & Signup */}
+            {!session && (
+              <>
+                <Link to="/auth" className="btn-secondary">
+                  Login
+                </Link>
+                <Link to="/auth" className="btn-primary">
+                  Sign Up
+                </Link>
+              </>
+            )}
 
-                        {/* 2️⃣ SESSION EXISTS → EXISTING WALLET LOGIC */}
-                        {session && (
-                            <>
-                                {isConnected ? (
-                                    <div className="relative flex items-center gap-3">
-                                        <button className="btn-primary flex items-center gap-2">
-                                            <CheckCircle className="w-4 h-4" />
-                                            Connected
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <button
-                                        onClick={handleConnect}
-                                        disabled={isLoading}
-                                        className="btn-primary flex items-center gap-2"
-                                    >
-                                        <Wallet className="w-4 h-4" />
-                                        {isLoading ? "Connecting..." : "Connect Wallet"}
-                                    </button>
-                                )}
-                                <div>
-                                <button
-                                    onClick={() => setOpen(!open)}
-                                    className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300"
-                                >
-                                    <User className="w-5 h-5 text-gray-700" />
-                                </button>
+            {/* 2️⃣ SESSION EXISTS → EXISTING WALLET LOGIC */}
+            {session && (
+              <>
+                {isConnected ? (
+                  <div className="relative flex items-center gap-3">
+                    <button className="btn-primary flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4" />
+                      Connected
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleConnect}
+                    disabled={isLoading}
+                    className="btn-primary flex items-center gap-2"
+                  >
+                    <Wallet className="w-4 h-4" />
+                    {isLoading ? "Connecting..." : "Connect Wallet"}
+                  </button>
+                )}
+                <div className="relative">
+                  <button
+                    onClick={() => setOpen(!open)}
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-medical-500 flex items-center justify-center hover:shadow-lg transition-all duration-300 hover:scale-105 shadow-md"
+                  >
+                    <User className="w-5 h-5 text-white" />
+                  </button>
 
-                                {open && (
-                                    <div className="absolute right-20 top-3 w-36 rounded-md bg-white shadow-lg border">
-                                        <button
-                                            onClick={handleLogout}
-                                            className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100"
-                                        >
-                                            <LogOut className="w-4 h-4" />
-                                            Logout
-                                        </button>
-                                    </div>
-                                )}
-                                </div>
-                            </>
-                        )}
-                    </div>
+                  {open && (
+                    <>
+                      {/* Backdrop */}
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setOpen(false)}
+                      />
 
+                      {/* Dropdown Menu */}
+                      <div className="absolute right-0 top-14 w-64 rounded-2xl bg-white/95 backdrop-blur-xl shadow-2xl border border-slate-200/50 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                        {/* User Info Section */}
+                        <div className="bg-gradient-to-br from-primary-500 to-medical-500 px-4 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+                              <User className="w-6 h-6 text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-white truncate">
+                                {session?.user?.email?.split("@")[0] || "User"}
+                              </p>
+                              <p className="text-xs text-white/80 truncate">
+                                {session?.user?.email}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Menu Items */}
+                        <div className="p-2">
+                          <button
+                            onClick={() => {
+                              handleLogout();
+                              setOpen(false);
+                            }}
+                            className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all duration-200 group"
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-red-100 group-hover:bg-red-200 flex items-center justify-center transition-colors">
+                              <LogOut className="w-4 h-4 text-red-600" />
+                            </div>
+                            <span>Logout</span>
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
-            </div>
-        </nav>
-    )
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
 }
+

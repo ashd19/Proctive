@@ -13,10 +13,11 @@ import { useServices } from "../../services/useServices";
 import { toast } from "react-hot-toast";
 import { useWalletStore } from "../../store/walletStore";
 import { Link } from "react-router-dom";
+import ipfsService from "../../services/ipfs";
 
 export default function AddImage() {
   const { address, isConnected } = useWalletStore();
-  const { services, loading: servicesLoading } = useServices();
+  const { services } = useServices();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const [file, setFile] = useState<File | null>(null);
@@ -95,14 +96,14 @@ export default function AddImage() {
       return;
     }
 
-    if (!services || !services.ipfs || !services.auditLog) {
+    if (!services || !services.patientRecords || !services.auditLog) {
       toast.error("Services are still loading, please wait...");
       return;
     }
 
     setUploading(true);
     try {
-      // Step 0: Request MetaMask signature
+      // Step 1: Request MetaMask signature
       toast.loading("Please sign the transaction in MetaMask...", {
         id: "upload",
       });
@@ -113,58 +114,64 @@ export default function AddImage() {
       if (!provider) {
         throw new Error("MetaMask not found");
       }
-      const signature = await provider.request({
+      await provider.request({
         method: "personal_sign",
         params: [message, address],
       });
 
-      // Step 1: Upload image to IPFS
-      toast.loading("Uploading image to IPFS...", { id: "upload" });
-      const imageCid = await services.ipfs.uploadToIPFS(file);
+      // Step 2: Upload image file directly to IPFS (encrypted)
+      toast.loading("Encrypting and uploading image to IPFS...", {
+        id: "upload",
+      });
+      const fileUploadResult = await (ipfsService as any).uploadEncryptedFile(
+        file,
+        address,
+      );
 
-      // Step 2: Create metadata and upload to IPFS
-      toast.loading("Creating metadata...", { id: "upload" });
-      const imageMetadata = {
-        type: "medical-image",
-        metadata: {
-          title: formData.title,
-          recordType: formData.recordType,
-          description: formData.description,
-          fileName: file.name,
-          fileSize: file.size,
-          fileType: file.type,
-          uploadedAt: new Date().toISOString(),
-          uploadedBy: address,
-          group: "patient",
-          patientAddress: address,
-          imageCid,
-          imageUrl: `https://gateway.pinata.cloud/ipfs/${imageCid}`,
-          signature: signature,
-          signedMessage: message,
-        },
-        imageData: {
-          cid: imageCid,
-          format: file.type,
-          dimensions: "Unknown", // Could be extracted with canvas if needed
-        },
+      console.log("Image uploaded to IPFS:", fileUploadResult);
+
+      // Step 3: Create blockchain record with file metadata
+      toast.loading("Creating blockchain record...", { id: "upload" });
+      const recordData = {
+        patientId: address,
+        recordType: 3, // IMAGING type
+        title: formData.title,
+        description: formData.description || "Medical Image Record",
+        hospitalName: "Patient Upload",
+        doctorName: "Self",
+        notes: `Image File: ${fileUploadResult.fileName} (${(
+          fileUploadResult.fileSize /
+          1024 /
+          1024
+        ).toFixed(2)} MB)`,
+        tags: [formData.recordType, "Image", "Patient Upload"],
+        // Store file metadata
+        fileData: true,
+        fileName: fileUploadResult.fileName,
+        fileSize: fileUploadResult.fileSize,
+        mimeType: fileUploadResult.mimeType,
+        fileUrl: `https://gateway.pinata.cloud/ipfs/${fileUploadResult.ipfsHash}`,
       };
 
-      const safeTitle = formData.title
-        ? formData.title
-            .replace(/\s+/g, "_")
-            .replace(/[^a-zA-Z0-9_-]/g, "")
-            .slice(0, 50)
-        : `image-${Date.now()}`;
-      const jsonFileName = `${safeTitle}_metadata.json`;
-      const hash = await services.ipfs.uploadJSON(imageMetadata, jsonFileName);
-      setIpfsHash(hash);
+      // Pass the existing IPFS upload result to avoid re-uploading as JSON
+      const recordId = await services.patientRecords.createRecord(
+        address,
+        recordData,
+        {
+          ipfsHash: fileUploadResult.ipfsHash,
+          encryptedKey: fileUploadResult.encryptedKey,
+          fileHash: fileUploadResult.fileHash,
+        },
+      );
+      console.log("Blockchain record created with ID:", recordId);
+      setIpfsHash(recordId.toString());
 
       // Step 4: Log to audit trail
       toast.loading("Recording in audit log...", { id: "upload" });
       await services.auditLog.logAccess(
         address,
-        0,
-        3,
+        recordId,
+        3, // UPLOAD
         "Patient",
         "patient",
         "Direct Upload",
@@ -173,7 +180,7 @@ export default function AddImage() {
       );
 
       // Step 5: Success
-      toast.success(`✓ Signed & uploaded to IPFS! Hash: ${hash}`, {
+      toast.success(`✓ Image uploaded to IPFS! Record ID: ${recordId}`, {
         id: "upload",
         duration: 5000,
       });

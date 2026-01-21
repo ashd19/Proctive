@@ -27,6 +27,7 @@ export default function ConvertToJson() {
   const [uploading, setUploading] = useState(false);
   const [jsonData, setJsonData] = useState<any>(null);
   const [jsonString, setJsonString] = useState<string>("");
+  const [showFullJson, setShowFullJson] = useState(false);
   const [uploadForm, setUploadForm] = useState({
     title: "",
     recordType: "",
@@ -173,6 +174,7 @@ export default function ConvertToJson() {
     setFile(null);
     setJsonData(null);
     setJsonString("");
+    setShowFullJson(false);
     setUploadForm({ title: "", recordType: "", description: "" });
   };
 
@@ -187,69 +189,44 @@ export default function ConvertToJson() {
       return;
     }
 
-    if (!services || !services.ipfs || !services.auditLog) {
+    if (!services || !services.patientRecords || !services.auditLog) {
       toast.error("Services are still loading, please wait...");
       return;
     }
 
     setUploading(true);
     try {
-      // Step 1: Request MetaMask signature
-      toast.loading("Please sign the transaction in MetaMask...", {
+      toast.loading("Uploading to IPFS and creating blockchain record...", {
         id: "upload",
       });
 
-      const message = `Upload medical data to IPFS\nTitle: ${
-        uploadForm.title
-      }\nType: ${
-        uploadForm.recordType
-      }\nTimestamp: ${new Date().toISOString()}`;
-
-      // Request signature from MetaMask
-      const provider = (window as any).ethereum;
-      if (!provider) {
-        throw new Error("MetaMask not found");
-      }
-
-      const signature = await provider.request({
-        method: "personal_sign",
-        params: [message, address],
-      });
-
-      toast.loading("Uploading JSON to IPFS...", { id: "upload" });
-
-      // Create comprehensive metadata with signature
-      const uploadMetadata = {
-        ...jsonData,
-        uploadInfo: {
-          title: uploadForm.title,
-          recordType: uploadForm.recordType,
-          description: uploadForm.description,
-          originalFileName: file?.name || "unknown",
-          uploadedAt: new Date().toISOString(),
-          uploadedBy: address,
-          patientAddress: address,
-          signature: signature,
-          signedMessage: message,
-        },
+      // Create blockchain record (handles IPFS upload internally)
+      const recordData = {
+        patientId: address,
+        recordType: 0, // GENERAL type
+        title: uploadForm.title,
+        description: uploadForm.description || "Medical Data JSON",
+        hospitalName: "Patient Upload",
+        doctorName: "Self",
+        diagnosis: jsonData.diagnosis,
+        treatment: jsonData.treatment,
+        medications: jsonData.medications,
+        notes: JSON.stringify(jsonData, null, 2),
+        tags: [uploadForm.recordType, "JSON", "Patient Upload"],
       };
 
-      // Upload JSON to IPFS
-      const safeTitle = uploadForm.title
-        ? uploadForm.title
-            .replace(/\s+/g, "_")
-            .replace(/[^a-zA-Z0-9_-]/g, "")
-            .slice(0, 50)
-        : `record-${Date.now()}`;
-      const jsonFileName = `${safeTitle}_medical_data.json`;
-      const hash = await services.ipfs.uploadJSON(uploadMetadata, jsonFileName);
+      const recordId = await services.patientRecords.createRecord(
+        address,
+        recordData,
+      );
+      console.log("Blockchain record created with ID:", recordId);
 
       // Log to audit trail
-      toast.loading("Recording in audit log...", { id: "upload" });
+      toast.loading("Logging to audit trail...", { id: "upload" });
       await services.auditLog.logAccess(
         address,
-        0, // No specific record ID for direct IPFS uploads
-        3, // UPDATE/UPLOAD type
+        recordId,
+        3, // UPLOAD type
         "Patient",
         "patient",
         "Direct Upload",
@@ -257,7 +234,7 @@ export default function ConvertToJson() {
         navigator.userAgent.substring(0, 50),
       );
 
-      toast.success(`✓ Signed & uploaded to IPFS! Hash: ${hash}`, {
+      toast.success(`✓ Record uploaded to IPFS & blockchain! ID: ${recordId}`, {
         id: "upload",
         duration: 5000,
       });
@@ -510,8 +487,19 @@ export default function ConvertToJson() {
                     </div>
                     <div className="flex-1 overflow-auto">
                       <pre className="p-6 text-xs font-mono text-slate-800 whitespace-pre-wrap break-words">
-                        {jsonString}
+                        {showFullJson
+                          ? jsonString
+                          : jsonString.split("\n").slice(0, 3).join("\n") +
+                            "\n..."}
                       </pre>
+                      <div className="px-6 pb-6">
+                        <button
+                          onClick={() => setShowFullJson(!showFullJson)}
+                          className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
+                        >
+                          {showFullJson ? "▲ Show Less" : "▼ See More"}
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 )}

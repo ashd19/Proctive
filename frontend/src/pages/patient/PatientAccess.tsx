@@ -1,164 +1,236 @@
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Shield, Clock, CheckCircle, XCircle, Loader, AlertTriangle, User, Building2 } from 'lucide-react'
-import toast from 'react-hot-toast'
-import { useServices } from '../../services/useServices'
-import { useWalletStore } from '../../store/walletStore'
-import { ConsentRequest, AccessGrant, AccessControlService, ConsentStatus } from '../../services/accessControlService'
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import {
+  Shield,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Loader,
+  AlertTriangle,
+  User,
+  Building2,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import { useServices } from "../../services/useServices";
+import { useWalletStore } from "../../store/walletStore";
+import {
+  ConsentRequest,
+  AccessGrant,
+  AccessControlService,
+  ConsentStatus,
+} from "../../services/accessControlService";
 
 export default function PatientAccess() {
-  const { services, loading: servicesLoading } = useServices()
-  const { address } = useWalletStore()
-  
-  const [activeTab, setActiveTab] = useState<'requests' | 'grants'>('requests')
-  const [consentRequests, setConsentRequests] = useState<ConsentRequest[]>([])
-  const [accessGrants, setAccessGrants] = useState<AccessGrant[]>([])
-  const [loading, setLoading] = useState(true)
-  const [processingId, setProcessingId] = useState<number | null>(null)
+  const { services, loading: servicesLoading } = useServices();
+  const { address } = useWalletStore();
+
+  const [activeTab, setActiveTab] = useState<"requests" | "grants">("requests");
+  const [consentRequests, setConsentRequests] = useState<ConsentRequest[]>([]);
+  const [accessGrants, setAccessGrants] = useState<AccessGrant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState<number | null>(null);
 
   // Load data
   useEffect(() => {
     async function loadData() {
       if (!services.accessControl || !address) {
-        setLoading(false)
-        return
+        setLoading(false);
+        return;
       }
 
       try {
-        setLoading(true)
-        
+        setLoading(true);
+
         // Load consent requests
-        const requests = await services.accessControl.getPatientConsentRequests(address)
-        setConsentRequests(requests)
+        const requests = await services.accessControl.getPatientConsentRequests(
+          address,
+        );
+        setConsentRequests(requests);
 
         // Load grantees
-        const granteeAddresses = await services.accessControl.getPatientGrantees(address)
+        const granteeAddresses =
+          await services.accessControl.getPatientGrantees(address);
 
         // Load access grants for each grantee
         const grants = await Promise.all(
           granteeAddresses.map(async (grantee) => {
-            return services.accessControl!.getAccessGrant(address, grantee)
-          })
-        )
-        setAccessGrants(grants.filter(Boolean) as AccessGrant[])
-
+            return services.accessControl!.getAccessGrant(address, grantee);
+          }),
+        );
+        setAccessGrants(grants.filter(Boolean) as AccessGrant[]);
       } catch (error: any) {
-        console.error('Error loading access data:', error)
-        toast.error(error.message || 'Failed to load access data')
+        console.error("Error loading access data:", error);
+        toast.error(error.message || "Failed to load access data");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
     if (!servicesLoading) {
-      loadData()
+      loadData();
     }
-  }, [services.accessControl, address, servicesLoading])
+  }, [services.accessControl, address, servicesLoading]);
 
   // Approve consent request
   const handleApprove = async (requestId: number) => {
-    if (!services.accessControl) return
+    if (!services.accessControl || !services.auditLog || !address) return;
 
     try {
-      setProcessingId(requestId)
-      toast.loading('Approving consent request...')
-      
-      await services.accessControl.approveConsent(requestId)
-      
-      toast.dismiss()
-      toast.success('✓ Consent approved! Access granted on blockchain')
-      
+      setProcessingId(requestId);
+      toast.loading("Approving consent request...");
+
+      // Get request details before approving
+      const request = consentRequests.find((r) => r.id === requestId);
+
+      await services.accessControl.approveConsent(requestId);
+
+      // Log the approval in audit log
+      if (request) {
+        await services.auditLog.logAccess(
+          address,
+          0, // No specific record ID for access approval
+          4, // CONSENT_APPROVED access type
+          request.institutionName,
+          "system",
+          request.institutionName,
+          "blockchain",
+          `Approved access for ${request.requester.slice(
+            0,
+            6,
+          )}...${request.requester.slice(-4)}`,
+        );
+      }
+
+      toast.dismiss();
+      toast.success("✓ Consent approved! Access granted on blockchain");
+
       // Reload data
       if (address) {
-        const requests = await services.accessControl.getPatientConsentRequests(address)
-        setConsentRequests(requests)
-        
-        const granteeAddresses = await services.accessControl.getPatientGrantees(address)
+        const requests = await services.accessControl.getPatientConsentRequests(
+          address,
+        );
+        setConsentRequests(requests);
+
+        const granteeAddresses =
+          await services.accessControl.getPatientGrantees(address);
         const grants = await Promise.all(
-          granteeAddresses.map(async (grantee) => services.accessControl!.getAccessGrant(address, grantee))
-        )
-        setAccessGrants(grants.filter(Boolean) as AccessGrant[])
+          granteeAddresses.map(async (grantee) =>
+            services.accessControl!.getAccessGrant(address, grantee),
+          ),
+        );
+        setAccessGrants(grants.filter(Boolean) as AccessGrant[]);
       }
     } catch (error: any) {
-      toast.dismiss()
-      toast.error(error.message || 'Failed to approve consent')
+      toast.dismiss();
+      toast.error(error.message || "Failed to approve consent");
     } finally {
-      setProcessingId(null)
+      setProcessingId(null);
     }
-  }
+  };
 
   // Reject consent request
   const handleReject = async (requestId: number) => {
-    if (!services.accessControl) return
+    if (!services.accessControl || !services.auditLog || !address) return;
 
     try {
-      setProcessingId(requestId)
-      toast.loading('Rejecting consent request...')
-      
-      await services.accessControl.rejectConsent(requestId)
-      
-      toast.dismiss()
-      toast.success('✓ Consent request rejected')
-      
+      setProcessingId(requestId);
+      toast.loading("Rejecting consent request...");
+
+      // Get request details before rejecting
+      const request = consentRequests.find((r) => r.id === requestId);
+
+      await services.accessControl.rejectConsent(requestId);
+
+      // Log the rejection in audit log
+      if (request) {
+        await services.auditLog.logAccess(
+          address,
+          0, // No specific record ID for access rejection
+          5, // CONSENT_REJECTED access type
+          request.institutionName,
+          "system",
+          request.institutionName,
+          "blockchain",
+          `Rejected access for ${request.requester.slice(
+            0,
+            6,
+          )}...${request.requester.slice(-4)}`,
+        );
+      }
+
+      toast.dismiss();
+      toast.success("✓ Consent request rejected");
+
       // Reload data
       if (address) {
-        const requests = await services.accessControl.getPatientConsentRequests(address)
-        setConsentRequests(requests)
+        const requests = await services.accessControl.getPatientConsentRequests(
+          address,
+        );
+        setConsentRequests(requests);
       }
     } catch (error: any) {
-      toast.dismiss()
-      toast.error(error.message || 'Failed to reject consent')
+      toast.dismiss();
+      toast.error(error.message || "Failed to reject consent");
     } finally {
-      setProcessingId(null)
+      setProcessingId(null);
     }
-  }
+  };
 
   // Revoke access
   const handleRevoke = async (granteeAddress: string) => {
-    if (!services.accessControl) return
+    if (!services.accessControl) return;
 
     try {
-      setProcessingId(Date.now())
-      toast.loading('Revoking access...')
-      
-      await services.accessControl.revokeAccess(granteeAddress)
-      
-      toast.dismiss()
-      toast.success('✓ Access revoked successfully')
-      
+      setProcessingId(Date.now());
+      toast.loading("Revoking access...");
+
+      await services.accessControl.revokeAccess(granteeAddress);
+
+      toast.dismiss();
+      toast.success("✓ Access revoked successfully");
+
       // Reload grants
       if (address) {
-        const granteeAddresses = await services.accessControl.getPatientGrantees(address)
+        const granteeAddresses =
+          await services.accessControl.getPatientGrantees(address);
         const grants = await Promise.all(
-          granteeAddresses.map(async (grantee) => services.accessControl!.getAccessGrant(address, grantee))
-        )
-        setAccessGrants(grants.filter(Boolean) as AccessGrant[])
+          granteeAddresses.map(async (grantee) =>
+            services.accessControl!.getAccessGrant(address, grantee),
+          ),
+        );
+        setAccessGrants(grants.filter(Boolean) as AccessGrant[]);
       }
     } catch (error: any) {
-      toast.dismiss()
-      toast.error(error.message || 'Failed to revoke access')
+      toast.dismiss();
+      toast.error(error.message || "Failed to revoke access");
     } finally {
-      setProcessingId(null)
+      setProcessingId(null);
     }
-  }
+  };
 
   if (servicesLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader className="w-8 h-8 animate-spin text-primary-600" />
       </div>
-    )
+    );
   }
 
-  const pendingRequests = consentRequests.filter(r => r.status === ConsentStatus.PENDING)
-  const activeGrants = accessGrants.filter(g => g.isActive && g.expiresAt * 1000 > Date.now())
+  const pendingRequests = consentRequests.filter(
+    (r) => r.status === ConsentStatus.PENDING,
+  );
+  const activeGrants = accessGrants.filter(
+    (g) => g.isActive && g.expiresAt * 1000 > Date.now(),
+  );
 
   return (
     <div className="p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Access Management</h1>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">
+            Access Management
+          </h1>
           <p className="text-slate-600">
             Control who can access your medical records
           </p>
@@ -167,11 +239,11 @@ export default function PatientAccess() {
         {/* Tabs */}
         <div className="flex gap-4 mb-6 border-b border-slate-200">
           <button
-            onClick={() => setActiveTab('requests')}
+            onClick={() => setActiveTab("requests")}
             className={`px-6 py-3 font-semibold transition-colors relative ${
-              activeTab === 'requests'
-                ? 'text-primary-600'
-                : 'text-slate-600 hover:text-slate-900'
+              activeTab === "requests"
+                ? "text-primary-600"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             Consent Requests
@@ -180,16 +252,16 @@ export default function PatientAccess() {
                 {pendingRequests.length}
               </span>
             )}
-            {activeTab === 'requests' && (
+            {activeTab === "requests" && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600" />
             )}
           </button>
           <button
-            onClick={() => setActiveTab('grants')}
+            onClick={() => setActiveTab("grants")}
             className={`px-6 py-3 font-semibold transition-colors relative ${
-              activeTab === 'grants'
-                ? 'text-primary-600'
-                : 'text-slate-600 hover:text-slate-900'
+              activeTab === "grants"
+                ? "text-primary-600"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             Active Access Grants
@@ -198,20 +270,24 @@ export default function PatientAccess() {
                 {activeGrants.length}
               </span>
             )}
-            {activeTab === 'grants' && (
+            {activeTab === "grants" && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600" />
             )}
           </button>
         </div>
 
         {/* Consent Requests Tab */}
-        {activeTab === 'requests' && (
+        {activeTab === "requests" && (
           <div className="space-y-4">
             {pendingRequests.length === 0 ? (
               <div className="bg-white rounded-xl p-12 text-center shadow-sm border border-slate-200">
                 <CheckCircle className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">No pending requests</h3>
-                <p className="text-slate-600">You don't have any pending consent requests</p>
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                  No pending requests
+                </h3>
+                <p className="text-slate-600">
+                  You don't have any pending consent requests
+                </p>
               </div>
             ) : (
               pendingRequests.map((request) => (
@@ -233,7 +309,8 @@ export default function PatientAccess() {
                         <div className="flex items-center gap-4 text-sm text-slate-600">
                           <div className="flex items-center gap-1">
                             <User className="w-4 h-4" />
-                            {request.requester.slice(0, 6)}...{request.requester.slice(-4)}
+                            {request.requester.slice(0, 6)}...
+                            {request.requester.slice(-4)}
                           </div>
                           <div className="flex items-center gap-1">
                             <Building2 className="w-4 h-4" />
@@ -241,7 +318,9 @@ export default function PatientAccess() {
                           </div>
                           <div className="flex items-center gap-1">
                             <Clock className="w-4 h-4" />
-                            {new Date(request.requestedAt * 1000).toLocaleDateString()}
+                            {new Date(
+                              request.requestedAt * 1000,
+                            ).toLocaleDateString()}
                           </div>
                         </div>
                       </div>
@@ -253,24 +332,36 @@ export default function PatientAccess() {
 
                   <div className="mb-4 space-y-2">
                     <div>
-                      <span className="text-sm font-semibold text-slate-700">Purpose: </span>
-                      <span className="text-sm text-slate-900">{request.purpose}</span>
-                    </div>
-                    <div>
-                      <span className="text-sm font-semibold text-slate-700">Requested Level: </span>
+                      <span className="text-sm font-semibold text-slate-700">
+                        Purpose:{" "}
+                      </span>
                       <span className="text-sm text-slate-900">
-                        {AccessControlService.getAccessLevelName(request.requestedLevel)}
+                        {request.purpose}
                       </span>
                     </div>
                     <div>
-                      <span className="text-sm font-semibold text-slate-700">Validity: </span>
+                      <span className="text-sm font-semibold text-slate-700">
+                        Requested Level:{" "}
+                      </span>
+                      <span className="text-sm text-slate-900">
+                        {AccessControlService.getAccessLevelName(
+                          request.requestedLevel,
+                        )}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-sm font-semibold text-slate-700">
+                        Validity:{" "}
+                      </span>
                       <span className="text-sm text-slate-900">
                         {Math.floor(request.validityPeriod / 86400)} days
                       </span>
                     </div>
                     {request.recordIds.length > 0 && (
                       <div>
-                        <span className="text-sm font-semibold text-slate-700">Records: </span>
+                        <span className="text-sm font-semibold text-slate-700">
+                          Records:{" "}
+                        </span>
                         <span className="text-sm text-slate-900">
                           {request.recordIds.length} specific record(s)
                         </span>
@@ -307,18 +398,24 @@ export default function PatientAccess() {
         )}
 
         {/* Active Grants Tab */}
-        {activeTab === 'grants' && (
+        {activeTab === "grants" && (
           <div className="space-y-4">
             {activeGrants.length === 0 ? (
               <div className="bg-white rounded-xl p-12 text-center shadow-sm border border-slate-200">
                 <Shield className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">No active access grants</h3>
-                <p className="text-slate-600">You haven't granted access to anyone yet</p>
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                  No active access grants
+                </h3>
+                <p className="text-slate-600">
+                  You haven't granted access to anyone yet
+                </p>
               </div>
             ) : (
               activeGrants.map((grant) => {
-                const daysUntilExpiry = Math.ceil((grant.expiresAt * 1000 - Date.now()) / 86400000)
-                
+                const daysUntilExpiry = Math.ceil(
+                  (grant.expiresAt * 1000 - Date.now()) / 86400000,
+                );
+
                 return (
                   <motion.div
                     key={grant.grantee}
@@ -333,12 +430,16 @@ export default function PatientAccess() {
                         </div>
                         <div>
                           <h3 className="text-lg font-semibold text-slate-900 mb-1">
-                            {grant.grantee.slice(0, 6)}...{grant.grantee.slice(-4)}
+                            {grant.grantee.slice(0, 6)}...
+                            {grant.grantee.slice(-4)}
                           </h3>
                           <div className="flex items-center gap-4 text-sm text-slate-600">
                             <div className="flex items-center gap-1">
                               <Clock className="w-4 h-4" />
-                              Granted {new Date(grant.grantedAt * 1000).toLocaleDateString()}
+                              Granted{" "}
+                              {new Date(
+                                grant.grantedAt * 1000,
+                              ).toLocaleDateString()}
                             </div>
                             <div className="flex items-center gap-1">
                               <CheckCircle className="w-4 h-4" />
@@ -347,35 +448,51 @@ export default function PatientAccess() {
                           </div>
                         </div>
                       </div>
-                      <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                        daysUntilExpiry <= 7
-                          ? 'bg-amber-100 text-amber-700'
-                          : 'bg-green-100 text-green-700'
-                      }`}>
+                      <span
+                        className={`px-3 py-1 text-xs font-medium rounded-full ${
+                          daysUntilExpiry <= 7
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-green-100 text-green-700"
+                        }`}
+                      >
                         {daysUntilExpiry} days left
                       </span>
                     </div>
 
                     <div className="mb-4 space-y-2">
                       <div>
-                        <span className="text-sm font-semibold text-slate-700">Purpose: </span>
-                        <span className="text-sm text-slate-900">{grant.purpose}</span>
-                      </div>
-                      <div>
-                        <span className="text-sm font-semibold text-slate-700">Access Level: </span>
+                        <span className="text-sm font-semibold text-slate-700">
+                          Purpose:{" "}
+                        </span>
                         <span className="text-sm text-slate-900">
-                          {AccessControlService.getAccessLevelName(grant.accessLevel)}
+                          {grant.purpose}
                         </span>
                       </div>
                       <div>
-                        <span className="text-sm font-semibold text-slate-700">Expires: </span>
+                        <span className="text-sm font-semibold text-slate-700">
+                          Access Level:{" "}
+                        </span>
                         <span className="text-sm text-slate-900">
-                          {new Date(grant.expiresAt * 1000).toLocaleDateString()}
+                          {AccessControlService.getAccessLevelName(
+                            grant.accessLevel,
+                          )}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-sm font-semibold text-slate-700">
+                          Expires:{" "}
+                        </span>
+                        <span className="text-sm text-slate-900">
+                          {new Date(
+                            grant.expiresAt * 1000,
+                          ).toLocaleDateString()}
                         </span>
                       </div>
                       {grant.recordIds.length > 0 && (
                         <div>
-                          <span className="text-sm font-semibold text-slate-700">Records: </span>
+                          <span className="text-sm font-semibold text-slate-700">
+                            Records:{" "}
+                          </span>
                           <span className="text-sm text-slate-900">
                             {grant.recordIds.length} specific record(s)
                           </span>
@@ -396,12 +513,12 @@ export default function PatientAccess() {
                       Revoke Access
                     </button>
                   </motion.div>
-                )
+                );
               })
             )}
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }

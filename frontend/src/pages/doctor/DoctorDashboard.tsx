@@ -63,7 +63,7 @@ export default function DoctorDashboard() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-8 ">
       <Navbar otherThanLanding={true}/>
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
